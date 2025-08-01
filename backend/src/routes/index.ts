@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { ApiResponse } from '../types';
+import authRoutes from './auth';
+import conversationRoutes from './conversations';
+import tripRoutes from './trips';
 
 const router = Router();
 
 // Health check endpoint
-router.get('/health', (req, res: any) => {
+router.get('/health', (_req, res: any) => {
   const response: ApiResponse = {
     success: true,
     data: {
@@ -18,7 +21,7 @@ router.get('/health', (req, res: any) => {
 });
 
 // API info endpoint
-router.get('/info', (req, res: any) => {
+router.get('/info', (_req, res: any) => {
   const response: ApiResponse = {
     success: true,
     data: {
@@ -36,5 +39,10 @@ router.get('/info', (req, res: any) => {
   };
   res.json(response);
 });
+
+// Mount route modules
+router.use('/auth', authRoutes);
+router.use('/conversations', conversationRoutes);
+router.use('/trips', tripRoutes);
 
 export default router;

@@ -10,8 +10,10 @@ import config from './config/environment';
 import corsMiddleware from './middleware/cors';
 import { apiLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import Logger from './services/logging/Logger';
 
 import mainRoutes from './routes';
+import { initializeChatService } from './services/chat/ChatService';
 
 class App {
   public app: express.Application;
@@ -33,6 +35,7 @@ class App {
     this.initializeRoutes();
     this.initializeErrorHandling();
     this.initializeSocketIO();
+    this.initializeChatService();
   }
 
   private initializeMiddleware(): void {
@@ -58,7 +61,7 @@ class App {
 
     // Logging
     if (config.server.nodeEnv !== 'test') {
-      this.app.use(morgan('combined'));
+      this.app.use(morgan('combined', { stream: Logger.stream }));
     }
 
     // Request timing
@@ -94,19 +97,13 @@ class App {
   }
 
   private initializeSocketIO(): void {
-    this.io.on('connection', (socket) => {
-      console.log('Client connected:', socket.id);
+    // Basic Socket.IO setup - detailed handlers are in ChatService
+    console.log('Socket.IO server initialized');
+  }
 
-      socket.on('join_conversation', (data) => {
-        const { conversationId } = data;
-        socket.join(`conversation:${conversationId}`);
-        console.log(`Socket ${socket.id} joined conversation: ${conversationId}`);
-      });
-
-      socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-      });
-    });
+  private initializeChatService(): void {
+    initializeChatService(this.io);
+    console.log('Chat service initialized with WebSocket support');
   }
 
   public listen(): void {

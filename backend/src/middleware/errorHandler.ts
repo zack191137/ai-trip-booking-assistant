@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AppLogger } from '../services/logging';
 import { ApiResponse } from '../types';
 
 export class AppError extends Error {
@@ -48,12 +49,13 @@ export const errorHandler = (
     code = 'TOKEN_EXPIRED';
   }
 
-  console.error('Error:', {
-    message: error.message,
-    stack: error.stack,
+  // Log error using AppLogger
+  AppLogger.logError(error, {
     url: req.url,
     method: req.method,
-    timestamp: new Date().toISOString(),
+    statusCode,
+    code,
+    userId: req.user?.id || 'anonymous'
   });
 
   res.status(statusCode).json({

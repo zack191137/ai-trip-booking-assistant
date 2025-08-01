@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  password?: string; // Optional for type safety, but stored in P0
   preferences?: UserPreferences;
   paymentMethods?: PaymentMethod[];
   createdAt: Date;
@@ -144,10 +145,16 @@ export interface DayPlan {
 }
 
 export interface Activity {
+  name: string;
   time: string;
   type: 'flight' | 'hotel_checkin' | 'hotel_checkout' | 'restaurant' | 'free_time';
+  description?: string;
+  estimatedCost?: Money;
   details: any;
 }
+
+// TripItinerary is just an alias for TripPlan for PDF generation
+export type TripItinerary = TripPlan;
 
 export interface ApiResponse<T = any> {
   success: boolean;
