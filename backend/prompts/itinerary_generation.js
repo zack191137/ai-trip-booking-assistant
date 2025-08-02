@@ -20,7 +20,7 @@ module.exports = `You are an expert itinerary planner. Create a comprehensive da
 7. Consider the pace appropriate for the group size and travel style
 
 **Itinerary Format:**
-```
+"""
 🌟 [DESTINATION] TRAVEL ITINERARY
 📅 [Start Date] - [End Date] | [X] Days | [X] Travelers
 
@@ -58,7 +58,7 @@ module.exports = `You are an expert itinerary planner. Create a comprehensive da
 
 🛍️ SHOPPING & SOUVENIRS:
 • [Best areas and items to buy]
-```
+"""
 
 **Key Elements to Include:**
 - Arrival and departure logistics (airport transfers, check-in times)

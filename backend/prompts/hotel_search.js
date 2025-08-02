@@ -36,7 +36,7 @@ For each hotel option, provide:
 - Cultural and architectural styles typical to the destination
 
 **Sample Output Structure:**
-```
+"""
 HOTEL OPTION 1: [Hotel Category - e.g., "Luxury Downtown"]
 Name: [Hotel Name]
 Address: [Full Address, Neighborhood, City]
@@ -57,6 +57,6 @@ Location Highlights:
 Perfect for: [Brief explanation of why this fits their needs]
 
 [Repeat for 4-6 options]
-```
+"""
 
 **Generate hotel recommendations:**`;

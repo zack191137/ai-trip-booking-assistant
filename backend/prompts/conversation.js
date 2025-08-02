@@ -33,7 +33,7 @@ Known preferences so far:
 {{#if extractedPreferences.startDate}}• Start Date: {{extractedPreferences.startDate}}{{/if}}
 {{#if extractedPreferences.endDate}}• End Date: {{extractedPreferences.endDate}}{{/if}}
 {{#if extractedPreferences.travelers}}• Travelers: {{extractedPreferences.travelers}}{{/if}}
-{{#if extractedPreferences.budget}}• Budget: ${{extractedPreferences.budget.min}}-${{extractedPreferences.budget.max}} {{extractedPreferences.budget.currency}}{{/if}}
+{{#if extractedPreferences.budget}}• Budget: {{xtractedPreferences.budget.min}-{{extractedPreferences.budget.max}} {{extractedPreferences.budget.currency}}{{/if}}
 {{/if}}
 
 **User's Latest Message:** {{userMessage}}

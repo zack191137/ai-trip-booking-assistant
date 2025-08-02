@@ -35,7 +35,7 @@ For each flight option, provide:
 - Seasonal flight schedules
 
 **Sample Output Structure:**
-```
+"""
 FLIGHT OPTION 1: [Brief description]
 Airline: [Carrier Name]
 Flight: [Flight Numbers]
@@ -50,6 +50,6 @@ Price: $[Amount] per person
 Why this works: [Brief explanation]
 
 [Repeat for 3-5 options]
-```
+"""
 
 **Generate flight recommendations:**`;

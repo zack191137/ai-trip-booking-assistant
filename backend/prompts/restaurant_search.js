@@ -36,7 +36,7 @@ For each restaurant, provide:
 - Group size and dining occasion appropriateness
 
 **Sample Output Structure:**
-```
+"""
 RESTAURANT 1: [Category - e.g., "Local Specialty - Must Try"]
 Name: [Restaurant Name]
 Cuisine: [Cuisine Type]
@@ -56,7 +56,7 @@ Reservations: [Required/Recommended/Walk-in friendly]
 Perfect for: [Occasion - romantic dinner, group celebration, trying local food]
 
 [Repeat for 6-8 options]
-```
+"""
 
 **Special Categories to Include:**
 - Local/Traditional cuisine restaurant
