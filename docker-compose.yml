@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-booking-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
+      - FRONTEND_URL=http://24.199.110.244
+    restart: unless-stopped
+    networks:
+      - ai-booking-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-booking-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://24.199.110.244:3000
+      - VITE_WEBSOCKET_URL=ws://24.199.110.244:3000
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - ai-booking-network
+
+networks:
+  ai-booking-network:
+    driver: bridge
