@@ -13,12 +13,12 @@ import {
   Refresh,
   ExpandMore,
   ExpandLess,
-  Bug,
+  BugReport,
   Wifi,
   Security,
   Warning,
 } from '@mui/icons-material'
-import { AppError } from '@/utils/errorHandler'
+import type { AppError } from '@/utils/errorHandler'
 
 interface ErrorAlertProps {
   error: AppError
@@ -51,7 +51,7 @@ export function ErrorAlert({
       case 'BAD_REQUEST':
         return <Warning />
       default:
-        return <Bug />
+        return <BugReport />
     }
   }
 
@@ -175,7 +175,7 @@ export function ErrorAlert({
             </Typography>
           )}
           
-          {error.details && (
+          {error.details != null && (
             <Box sx={{ mt: 1 }}>
               <Typography variant="body2" gutterBottom>
                 <strong>Details:</strong>

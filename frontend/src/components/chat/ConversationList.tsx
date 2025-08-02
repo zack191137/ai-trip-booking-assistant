@@ -21,7 +21,7 @@ import {
   Unarchive,
   Edit,
 } from '@mui/icons-material'
-import { Conversation } from '@/types/chat'
+import type { Conversation } from '@/types/chat'
 import { format } from 'date-fns'
 
 interface ConversationListProps {

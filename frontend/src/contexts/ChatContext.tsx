@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import { Conversation, Message, ChatState, SendMessagePayload } from '@/types/chat'
+import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import type { Conversation, Message, ChatState, SendMessagePayload } from '@/types/chat'
 import { chatService } from '@/services/chat'
 import { socketService } from '@/services/socket'
 import { useAuth } from './AuthContext'
@@ -173,7 +174,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
       const conversations = await chatService.getConversations()
       dispatch({ type: 'SET_CONVERSATIONS', payload: conversations })
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load conversations' })
+      const errorMessage =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? // @ts-expect-error: error might have response property
+            error.response?.data?.message || 'Failed to load conversations'
+          : 'Failed to load conversations'
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
   }
 
@@ -184,7 +190,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
       dispatch({ type: 'ADD_CONVERSATION', payload: conversation })
       return conversation
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to create conversation' })
+      const errorMessage =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (error as { response?: { data?: { message?: string } } }).response!.data!.message!
+          : 'Failed to create conversation'
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
       throw error
     }
   }
@@ -195,7 +208,16 @@ export function ChatProvider({ children }: ChatProviderProps) {
       const conversation = await chatService.getConversation(conversationId)
       dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation })
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load conversation' })
+      let errorMessage = 'Failed to load conversation'
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        errorMessage = (error as { response?: { data?: { message?: string } } }).response!.data!.message!
+      }
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
   }
 
@@ -204,7 +226,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
       await chatService.deleteConversation(conversationId)
       dispatch({ type: 'REMOVE_CONVERSATION', payload: conversationId })
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to delete conversation' })
+      const errorMessage =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (error as { response?: { data?: { message?: string } } }).response!.data!.message!
+          : 'Failed to delete conversation'
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
   }
 

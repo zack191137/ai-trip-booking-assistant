@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react'
+import React, { createContext, useContext, useState, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import { Snackbar, Alert } from '@mui/material'
 import { ErrorHandler } from '@/utils/errorHandler'
 
@@ -121,7 +122,6 @@ export function useErrorWithNotification() {
   const [isLoading, setIsLoading] = useState(false)
 
   const executeWithNotification = useCallback(
-    // @ts-expect-error: Parsing issue with generic function
     async function <T>(
       asyncFn: () => Promise<T>,
       options?: {

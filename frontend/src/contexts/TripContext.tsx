@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react'
-import { TripPlan, TripState } from '@/types/trip'
+import React, { createContext, useContext, useReducer } from 'react'
+import type { ReactNode } from 'react'
+import type { TripPlan, TripState } from '@/types/trip'
 import { tripService } from '@/services/trip'
 
 interface TripContextType extends TripState {
@@ -12,6 +13,14 @@ interface TripContextType extends TripState {
   clearError: () => void
   setLoading: (loading: boolean) => void
 }
+
+interface ErrorResponse {
+        response?: {
+          data?: {
+            message?: string
+          }
+        }
+      }
 
 const TripContext = createContext<TripContextType | undefined>(undefined)
 
@@ -95,7 +104,25 @@ export function TripProvider({ children }: TripProviderProps) {
       const trips = await tripService.getTrips()
       dispatch({ type: 'SET_TRIPS', payload: trips })
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load trips' })
+      let errorMessage = 'Failed to load trips'
+      
+
+      const err = error as ErrorResponse
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof err.response === 'object' &&
+        err.response !== null &&
+        'data' in err.response &&
+        typeof err.response.data === 'object' &&
+        err.response.data !== null &&
+        'message' in err.response.data
+      ) {
+        errorMessage = err.response.data.message ?? errorMessage
+      }
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
   }
 
@@ -105,7 +132,22 @@ export function TripProvider({ children }: TripProviderProps) {
       const trip = await tripService.getTrip(tripId)
       dispatch({ type: 'SET_CURRENT_TRIP', payload: trip })
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load trip' })
+      let errorMessage = 'Failed to load trip'
+      const err = error as ErrorResponse
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof err.response === 'object' &&
+        err.response !== null &&
+        'data' in err.response &&
+        typeof err.response.data === 'object' &&
+        err.response.data !== null &&
+        'message' in err.response.data
+      ) {
+        errorMessage = err.response.data.message ?? errorMessage
+      }
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
     }
   }
 
@@ -116,7 +158,22 @@ export function TripProvider({ children }: TripProviderProps) {
       dispatch({ type: 'ADD_TRIP', payload: trip })
       return trip
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to create trip' })
+      let errorMessage = 'Failed to create trip'
+      const err = error as ErrorResponse
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof err.response === 'object' &&
+        err.response !== null &&
+        'data' in err.response &&
+        typeof err.response.data === 'object' &&
+        err.response.data !== null &&
+        'message' in err.response.data
+      ) {
+        errorMessage = err.response.data.message ?? errorMessage
+      }
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
       return null
     }
   }
@@ -128,7 +185,22 @@ export function TripProvider({ children }: TripProviderProps) {
       dispatch({ type: 'UPDATE_TRIP', payload: trip })
       return trip
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to update trip' })
+      let errorMessage = 'Failed to update trip'
+      const err = error as ErrorResponse
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof err.response === 'object' &&
+        err.response !== null &&
+        'data' in err.response &&
+        typeof err.response.data === 'object' &&
+        err.response.data !== null &&
+        'message' in err.response.data
+      ) {
+        errorMessage = err.response.data.message ?? errorMessage
+      }
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
       return null
     }
   }
@@ -140,7 +212,22 @@ export function TripProvider({ children }: TripProviderProps) {
       dispatch({ type: 'REMOVE_TRIP', payload: tripId })
       return true
     } catch (error: unknown) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to delete trip' })
+      let errorMessage = 'Failed to delete trip'
+      const err = error as ErrorResponse
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof err.response === 'object' &&
+        err.response !== null &&
+        'data' in err.response &&
+        typeof err.response.data === 'object' &&
+        err.response.data !== null &&
+        'message' in err.response.data
+      ) {
+        errorMessage = err.response.data.message ?? errorMessage
+      }
+      dispatch({ type: 'SET_ERROR', payload: errorMessage })
       return false
     }
   }

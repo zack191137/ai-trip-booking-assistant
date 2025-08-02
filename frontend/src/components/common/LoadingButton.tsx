@@ -1,10 +1,10 @@
 import React from 'react'
 import {
   Button,
-  ButtonProps,
   CircularProgress,
   Box,
 } from '@mui/material'
+import type { ButtonProps } from '@mui/material'
 
 interface LoadingButtonProps extends Omit<ButtonProps, 'startIcon' | 'endIcon'> {
   loading?: boolean

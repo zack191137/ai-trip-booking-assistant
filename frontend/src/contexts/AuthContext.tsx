@@ -11,6 +11,14 @@ interface AuthContextType extends AuthState {
   clearError: () => void
 }
 
+interface ErrorWithResponse {
+        response?: {
+          data?: {
+            message?: string
+          }
+}
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 type AuthAction =
@@ -105,7 +113,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       authService.setUser(response.user)
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
     } catch (error: unknown) {
-      const message = error.response?.data?.message || 'Login failed'
+      const message =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as ErrorWithResponse).response?.data?.message === 'string'
+          ? (error as ErrorWithResponse).response!.data!.message!
+          : 'Login failed'
       dispatch({ type: 'AUTH_ERROR', payload: message })
       throw error
     }
@@ -118,7 +132,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       authService.setUser(response.user)
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
     } catch (error: unknown) {
-      const message = error.response?.data?.message || 'Registration failed'
+      
+      
+
+      const message =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as ErrorWithResponse).response?.data?.message === 'string'
+          ? (error as ErrorWithResponse).response!.data!.message!
+          : 'Registration failed'
       dispatch({ type: 'AUTH_ERROR', payload: message })
       throw error
     }
@@ -143,8 +166,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authService.googleAuth(credential)
       authService.setUser(response.user)
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
-    } catch (error: unknown) {
-      const message = error.response?.data?.message || 'Google login failed'
+    } catch (error) {
+      const message =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as ErrorWithResponse).response?.data?.message === 'string'
+          ? (error as ErrorWithResponse).response!.data!.message!
+          : 'Google login failed'
       dispatch({ type: 'AUTH_ERROR', payload: message })
       throw error
     }

@@ -17,7 +17,7 @@ import {
   LocationOn,
   AccessTime,
 } from '@mui/icons-material'
-import { ActivityBooking } from '@/types/trip'
+import type { ActivityBooking } from '@/types/trip'
 import { format, parseISO } from 'date-fns'
 
 interface ActivityBookingCardProps {

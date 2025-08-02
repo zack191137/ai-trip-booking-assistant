@@ -16,7 +16,7 @@ import {
   ThumbDown,
   Refresh,
 } from '@mui/icons-material'
-import { Message } from '@/types/chat'
+import type { Message } from '@/types/chat'
 import { format } from 'date-fns'
 import { useAuth } from '@/contexts/AuthContext'
 
