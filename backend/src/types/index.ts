@@ -42,6 +42,7 @@ export interface Message {
   metadata?: {
     intent?: string;
     extractedData?: any;
+    type?: string;
   };
 }
 

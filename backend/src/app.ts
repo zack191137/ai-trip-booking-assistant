@@ -61,7 +61,7 @@ class App {
 
     // Logging
     if (config.server.nodeEnv !== 'test') {
-      this.app.use(morgan('combined', { stream: Logger.stream }));
+      this.app.use(morgan('combined', { stream: (Logger as any).stream }));
     }
 
     // Request timing

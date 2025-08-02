@@ -5,6 +5,11 @@ export { UserStorage, userStorage } from './UserStorage';
 export { ConversationStorage, conversationStorage } from './ConversationStorage';
 export { TripStorage, tripStorage } from './TripStorage';
 
+// Import storage instances for the manager
+import { userStorage } from './UserStorage';
+import { conversationStorage } from './ConversationStorage';
+import { tripStorage } from './TripStorage';
+
 // Storage manager for centralized access
 export class StorageManager {
   public users = userStorage;
