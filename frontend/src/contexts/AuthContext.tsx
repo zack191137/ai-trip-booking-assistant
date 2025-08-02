@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import { User, AuthState, LoginCredentials, RegisterCredentials } from '@/types/auth'
+import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import type { User, AuthState, LoginCredentials, RegisterCredentials } from '@/types/auth'
 import { authService } from '@/services/auth'
 
 interface AuthContextType extends AuthState {
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const user = await authService.getCurrentUser()
           authService.setUser(user)
           dispatch({ type: 'AUTH_SUCCESS', payload: user })
-        } catch (error) {
+        } catch {
           // Token invalid, clear stored user
           authService.removeUser()
           dispatch({ type: 'AUTH_ERROR', payload: 'Session expired' })
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authService.login(credentials)
       authService.setUser(response.user)
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error.response?.data?.message || 'Login failed'
       dispatch({ type: 'AUTH_ERROR', payload: message })
       throw error
@@ -116,7 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authService.register(credentials)
       authService.setUser(response.user)
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error.response?.data?.message || 'Registration failed'
       dispatch({ type: 'AUTH_ERROR', payload: message })
       throw error
@@ -129,7 +130,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authService.logout()
       authService.removeUser()
       dispatch({ type: 'AUTH_LOGOUT' })
-    } catch (error: any) {
+    } catch {
       // Even if logout fails on server, clear local state
       authService.removeUser()
       dispatch({ type: 'AUTH_LOGOUT' })
@@ -142,7 +143,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authService.googleAuth(credential)
       authService.setUser(response.user)
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error.response?.data?.message || 'Google login failed'
       dispatch({ type: 'AUTH_ERROR', payload: message })
       throw error
@@ -165,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {

@@ -4,15 +4,13 @@ import {
   Typography,
   Button,
   Container,
-  Grid,
   Card,
   CardContent,
-  CardMedia,
   Avatar,
 } from '@mui/material'
+import Grid from '@mui/material/Grid'
 import {
   Flight,
-  Hotel,
   Restaurant,
   Chat,
   AutoAwesome,

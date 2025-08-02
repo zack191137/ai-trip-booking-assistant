@@ -7,7 +7,6 @@ import {
   Typography,
   LinearProgress,
   StepConnector,
-  StepIcon,
   stepConnectorClasses,
   styled,
 } from '@mui/material'
@@ -58,14 +57,16 @@ const CustomConnector = styled(StepConnector)(({ theme }) => ({
   },
 }))
 
-const CustomStepIcon = (props: any) => {
+interface CustomStepIconProps {
+  active?: boolean
+  completed?: boolean
+  error?: boolean
+  className?: string
+}
+
+const CustomStepIcon = (props: CustomStepIconProps) => {
   const { active, completed, error, className } = props
 
-  const icons: { [index: string]: React.ReactElement } = {
-    1: <Circle />,
-    2: <Circle />,
-    3: <Circle />,
-  }
 
   if (completed) {
     return (
@@ -130,7 +131,7 @@ export function ProgressIndicator({
       connector={<CustomConnector />}
       sx={{ width: '100%' }}
     >
-      {steps.map((step, index) => (
+      {steps.map((step) => (
         <Step key={step.label} completed={step.completed}>
           <StepLabel
             StepIconComponent={CustomStepIcon}
@@ -185,7 +186,7 @@ export function ProgressIndicator({
         flexDirection: orientation === 'vertical' ? 'column' : 'row',
       }}
     >
-      {steps.map((step, index) => (
+      {steps.map((step) => (
         <Box
           key={step.label}
           sx={{

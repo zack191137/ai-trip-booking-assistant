@@ -53,8 +53,6 @@ export function useErrorHandler() {
     delay: number = 1000,
     context?: string
   ): Promise<T | null> => {
-    let lastError: unknown
-
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         if (attempt > 1) {
@@ -64,8 +62,7 @@ export function useErrorHandler() {
         const result = await asyncFn()
         return result
       } catch (err) {
-        lastError = err
-        const appError = ErrorHandler.handle(err)
+        ErrorHandler.handle(err)
         
         if (attempt === maxAttempts || !ErrorHandler.shouldRetry(err)) {
           handleError(err, `${context} (attempt ${attempt}/${maxAttempts})`)

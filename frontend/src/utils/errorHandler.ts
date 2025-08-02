@@ -4,7 +4,7 @@ export interface AppError {
   message: string
   code?: string
   status?: number
-  details?: any
+  details?: unknown
 }
 
 export class ErrorHandler {
@@ -30,7 +30,7 @@ export class ErrorHandler {
     if (response) {
       // Server responded with error status
       const status = response.status
-      const data = response.data as any
+      const data = response.data as { message?: string }
       
       switch (status) {
         case 400:

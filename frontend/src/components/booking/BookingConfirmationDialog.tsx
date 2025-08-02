@@ -17,7 +17,6 @@ import {
 } from '@mui/material'
 import {
   CheckCircle,
-  Warning,
   AttachMoney,
 } from '@mui/icons-material'
 
@@ -109,7 +108,7 @@ export function BookingConfirmationDialog({
             Booking Summary
           </Typography>
           
-          {items.map((item, index) => (
+          {items.map((item) => (
             <Box key={item.id} sx={{ mb: 2 }}>
               <Box
                 sx={{

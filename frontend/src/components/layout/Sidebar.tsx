@@ -14,8 +14,6 @@ import {
 import {
   Chat,
   Flight,
-  Hotel,
-  Restaurant,
   History,
   Settings,
   Help,
@@ -139,4 +137,5 @@ export function Sidebar({ open, onClose, variant }: SidebarProps) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { DRAWER_WIDTH }

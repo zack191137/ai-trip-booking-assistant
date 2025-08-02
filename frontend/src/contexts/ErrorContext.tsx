@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 import { Snackbar, Alert } from '@mui/material'
-import { ErrorHandler, AppError } from '@/utils/errorHandler'
+import { ErrorHandler } from '@/utils/errorHandler'
 
 interface ErrorContextType {
   showError: (error: unknown, context?: string) => void
@@ -84,13 +84,13 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
       {children}
       
       {/* Global notification snackbar */}
-      <Snackbar
-        open={Boolean(notification)}
-        autoHideDuration={notification?.duration || 4000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        {notification && (
+      {notification && (
+        <Snackbar
+          open={true}
+          autoHideDuration={notification.duration || 4000}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
           <Alert
             onClose={handleClose}
             severity={notification.type}
@@ -99,12 +99,13 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
           >
             {notification.message}
           </Alert>
-        )}
-      </Snackbar>
+        </Snackbar>
+      )}
     </ErrorContext.Provider>
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useErrorNotification() {
   const context = useContext(ErrorContext)
   if (context === undefined) {
@@ -114,18 +115,21 @@ export function useErrorNotification() {
 }
 
 // Hook that combines error handling with notifications
+// eslint-disable-next-line react-refresh/only-export-components
 export function useErrorWithNotification() {
   const { showError, showSuccess, showWarning, showInfo } = useErrorNotification()
   const [isLoading, setIsLoading] = useState(false)
 
-  const executeWithNotification = useCallback(async <T>(
-    asyncFn: () => Promise<T>,
-    options?: {
-      context?: string
-      successMessage?: string
-      loadingState?: boolean
-    }
-  ): Promise<T | null> => {
+  const executeWithNotification = useCallback(
+    // @ts-expect-error: Parsing issue with generic function
+    async function <T>(
+      asyncFn: () => Promise<T>,
+      options?: {
+        context?: string
+        successMessage?: string
+        loadingState?: boolean
+      }
+    ): Promise<T | null> {
     const { context, successMessage, loadingState = true } = options || {}
     
     if (loadingState) {

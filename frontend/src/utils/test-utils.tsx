@@ -11,6 +11,7 @@ import { ErrorProvider } from '@/contexts/ErrorContext'
 import { AppProvider } from '@/contexts/AppContext'
 
 // Mock providers for testing
+// eslint-disable-next-line react-refresh/only-export-components
 const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const mockAuthContext = {
     user: {
@@ -37,6 +38,7 @@ const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const MockChatProvider = ({ children }: { children: React.ReactNode }) => {
   const mockChatContext = {
     conversations: [],
@@ -59,6 +61,7 @@ const MockChatProvider = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const MockTripProvider = ({ children }: { children: React.ReactNode }) => {
   const mockTripContext = {
     trips: [],
@@ -86,13 +89,14 @@ interface AllTheProvidersProps {
   children: React.ReactNode
   options?: {
     route?: string
-    user?: any
+    user?: unknown
     authenticated?: boolean
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const AllTheProviders = ({ children, options = {} }: AllTheProvidersProps) => {
-  const { route = '/', authenticated = true } = options
+  const { authenticated = true } = options
 
   return (
     <BrowserRouter>
@@ -124,15 +128,15 @@ const customRender = (
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'> & {
     route?: string
-    user?: any
+    user?: unknown
     authenticated?: boolean
   }
 ) => {
-  const { route, user, authenticated, ...renderOptions } = options || {}
+  const { authenticated, ...renderOptions } = options || {}
 
   return render(ui, {
     wrapper: ({ children }) => (
-      <AllTheProviders options={{ route, user, authenticated }}>
+      <AllTheProviders options={{ authenticated }}>
         {children}
       </AllTheProviders>
     ),
@@ -172,7 +176,7 @@ export const mockWebSocket = () => {
     readyState: WebSocket.OPEN,
   }))
   
-  global.WebSocket = WebSocketMock as any
+  global.WebSocket = WebSocketMock as typeof WebSocket
   return WebSocketMock
 }
 
@@ -184,8 +188,8 @@ export const mockIntersectionObserver = () => {
     unobserve: vi.fn(),
   }))
   
-  global.IntersectionObserver = IntersectionObserverMock as any
-  global.IntersectionObserverEntry = {} as any
+  global.IntersectionObserver = IntersectionObserverMock as typeof IntersectionObserver
+  global.IntersectionObserverEntry = {} as typeof IntersectionObserverEntry
   
   return IntersectionObserverMock
 }
@@ -264,6 +268,7 @@ export const createMockMessage = (overrides = {}) => ({
 })
 
 // Re-export everything
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react'
 export { customRender as render }
 export { vi } from 'vitest'

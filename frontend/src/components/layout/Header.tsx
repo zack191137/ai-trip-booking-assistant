@@ -8,11 +8,9 @@ import {
   Menu,
   MenuItem,
   Box,
-  Button,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
-  AccountCircle,
   ExitToApp,
   Person,
   Settings,

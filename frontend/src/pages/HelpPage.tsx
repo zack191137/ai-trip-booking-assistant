@@ -19,8 +19,6 @@ import {
   ExpandMore,
   Search,
   Chat,
-  Flight,
-  Support,
   Email,
   Phone,
 } from '@mui/icons-material'

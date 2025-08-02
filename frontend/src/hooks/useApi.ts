@@ -62,7 +62,8 @@ export function useApi<T>(
     if (immediate) {
       execute()
     }
-  }, deps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [immediate, ...deps])
 
   return {
     ...state,
@@ -72,7 +73,7 @@ export function useApi<T>(
   }
 }
 
-export function useMutation<T, P = any>(
+export function useMutation<T, P = unknown>(
   mutationFunction: (params: P) => Promise<T>
 ) {
   const [state, setState] = useState<ApiState<T>>({

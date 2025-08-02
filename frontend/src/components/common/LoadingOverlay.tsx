@@ -167,6 +167,7 @@ export function LoadingOverlay({
 }
 
 // Higher-order component for wrapping components with loading overlay
+// eslint-disable-next-line react-refresh/only-export-components
 export function withLoadingOverlay<P extends object>(
   Component: React.ComponentType<P>,
   loadingProps?: Partial<LoadingOverlayProps>

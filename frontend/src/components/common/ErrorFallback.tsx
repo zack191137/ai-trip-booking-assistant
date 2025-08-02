@@ -164,16 +164,5 @@ Please describe what you were doing when this error occurred:
   )
 }
 
-// Higher-order component for wrapping components with error boundary
-export function withErrorFallback<P extends object>(
-  Component: React.ComponentType<P>,
-  fallbackProps?: Partial<ErrorFallbackProps>
-) {
-  return function WrappedComponent(props: P) {
-    return (
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Component {...props} />
-      </React.Suspense>
-    )
-  }
-}
+// Remove withErrorFallback from this file to fix Fast Refresh error.
+// Please import withErrorFallback from './withErrorFallback' instead.

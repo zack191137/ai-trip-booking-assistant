@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -15,7 +15,6 @@ import {
 import {
   History,
   Chat,
-  Flight,
   Delete,
   Visibility,
 } from '@mui/icons-material'
@@ -51,7 +50,7 @@ export function HistoryPage() {
     }
   }
 
-  const getConversationSummary = (conversation: any) => {
+  const getConversationSummary = (conversation: { messages: Array<{ content: string }> }) => {
     if (conversation.messages.length === 0) {
       return 'No messages'
     }

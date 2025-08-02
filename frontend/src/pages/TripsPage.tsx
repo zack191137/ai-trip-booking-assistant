@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -9,10 +9,9 @@ import {
   Tabs,
   Container,
 } from '@mui/material'
-import { Add, Flight } from '@mui/icons-material'
+import { Add } from '@mui/icons-material'
 import { TripCard } from '@/components/trip/TripCard'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { ErrorAlert } from '@/components/common/ErrorAlert'
 import { useErrorWithNotification } from '@/contexts/ErrorContext'
 import { tripService } from '@/services/trip'
 import { TripPlan } from '@/types/trip'
@@ -23,13 +22,13 @@ export function TripsPage() {
   const [currentTab, setCurrentTab] = useState(0)
   const navigate = useNavigate()
   
-  const { executeWithNotification, isLoading, showError } = useErrorWithNotification()
+  const { executeWithNotification, isLoading } = useErrorWithNotification()
 
   useEffect(() => {
     loadTrips()
-  }, [])
+  }, [loadTrips])
 
-  const loadTrips = async () => {
+  const loadTrips = useCallback(async () => {
     const result = await executeWithNotification(
       () => tripService.getTrips(),
       { context: 'Loading trips' }
@@ -38,7 +37,7 @@ export function TripsPage() {
     if (result) {
       setTrips(result)
     }
-  }
+  }, [executeWithNotification])
 
   const handleSelectTrip = (tripId: string) => {
     navigate(`/trips/${tripId}`)

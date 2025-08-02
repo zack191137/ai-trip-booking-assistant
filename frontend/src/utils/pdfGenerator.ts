@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import { TripPlan, FlightBooking, HotelBooking, ActivityBooking } from '@/types/trip'
+import { TripPlan } from '@/types/trip'
 import { format } from 'date-fns'
 
 export class PDFGenerator {
@@ -190,8 +190,8 @@ export class PDFGenerator {
     return new Blob([this.pdf.output('blob')], { type: 'application/pdf' })
   }
 
-  private groupActivitiesByDay(activities: any[]) {
-    const grouped: { [key: number]: any[] } = {}
+  private groupActivitiesByDay(activities: Array<{ day: number }>) {
+    const grouped: { [key: number]: Array<{ day: number }> } = {}
     
     activities.forEach(activity => {
       if (!grouped[activity.day]) {

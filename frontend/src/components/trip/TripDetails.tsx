@@ -13,7 +13,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Avatar,
   Button,
   LinearProgress,
 } from '@mui/material'
@@ -24,17 +23,13 @@ import {
   People,
   Flight,
   Hotel,
-  Restaurant,
   Edit,
   Share,
   Download,
-  CheckCircle,
-  Schedule,
-  Cancel,
 } from '@mui/icons-material'
 import { TripPlan } from '@/types/trip'
 import { ItineraryView } from './ItineraryView'
-import { format, differenceInDays } from 'date-fns'
+import { format } from 'date-fns'
 
 interface TripDetailsProps {
   trip: TripPlan

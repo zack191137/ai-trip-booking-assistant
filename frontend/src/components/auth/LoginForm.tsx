@@ -12,7 +12,9 @@ import {
 } from '@mui/material'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '@/contexts/AuthContext'
-import { LoginCredentials } from '@/types/auth'
+import type { LoginCredentials } from '@/types/auth'
+import type { CredentialResponse } from '@react-oauth/google'
+
 
 interface LoginFormProps {
   onSwitchToRegister: () => void
@@ -51,16 +53,21 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
     try {
       await login(formData)
-    } catch (error) {
+    } catch {
       // Error is handled by context
     }
   }
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       clearError()
-      await googleLogin(credentialResponse.credential)
-    } catch (error) {
+      if (credentialResponse.credential) {
+        await googleLogin(credentialResponse.credential)
+      } else {
+        // Optionally handle missing credential error
+      }
+    } catch {
       // Error is handled by context
     }
   }

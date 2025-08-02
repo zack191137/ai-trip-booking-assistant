@@ -36,22 +36,22 @@ export const tripService = {
     await tripApi.delete(`/${id}`)
   },
 
-  async generateItinerary(tripId: string, preferences?: any): Promise<TripPlan> {
+  async generateItinerary(tripId: string, preferences?: unknown): Promise<TripPlan> {
     const response = await tripApi.post(`/${tripId}/generate-itinerary`, { preferences })
     return response.data.trip
   },
 
-  async bookFlight(tripId: string, flightData: any): Promise<any> {
+  async bookFlight(tripId: string, flightData: unknown): Promise<unknown> {
     const response = await tripApi.post(`/${tripId}/book-flight`, flightData)
     return response.data.booking
   },
 
-  async bookHotel(tripId: string, hotelData: any): Promise<any> {
+  async bookHotel(tripId: string, hotelData: unknown): Promise<unknown> {
     const response = await tripApi.post(`/${tripId}/book-hotel`, hotelData)
     return response.data.booking
   },
 
-  async bookActivity(tripId: string, activityData: any): Promise<any> {
+  async bookActivity(tripId: string, activityData: unknown): Promise<unknown> {
     const response = await tripApi.post(`/${tripId}/book-activity`, activityData)
     return response.data.booking
   },

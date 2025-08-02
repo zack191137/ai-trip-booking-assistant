@@ -9,10 +9,6 @@ import {
   ListItemText,
   ListItemIcon,
   Switch,
-  Divider,
-  Button,
-  Card,
-  CardContent,
 } from '@mui/material'
 import {
   Settings,

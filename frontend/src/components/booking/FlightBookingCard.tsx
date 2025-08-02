@@ -11,13 +11,11 @@ import {
 } from '@mui/material'
 import {
   Flight,
-  Schedule,
-  Person,
   AttachMoney,
   FlightTakeoff,
   FlightLand,
 } from '@mui/icons-material'
-import { FlightBooking } from '@/types/trip'
+import type { FlightBooking } from '@/types/trip'
 import { format, parseISO } from 'date-fns'
 
 interface FlightBookingCardProps {

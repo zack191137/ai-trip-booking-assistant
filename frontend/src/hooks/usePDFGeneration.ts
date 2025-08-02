@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { TripPlan } from '@/types/trip'
-import { pdfGenerator, PDFGenerator } from '@/utils/pdfGenerator'
+import { PDFGenerator } from '@/utils/pdfGenerator'
 import { tripService } from '@/services/trip'
 
 export function usePDFGeneration() {
@@ -21,8 +21,8 @@ export function usePDFGeneration() {
       }
       
       return blob
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to generate PDF'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate PDF'
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
@@ -44,8 +44,8 @@ export function usePDFGeneration() {
       }
       
       return blob
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to generate PDF'
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate PDF'
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
@@ -66,7 +66,7 @@ export function usePDFGeneration() {
       }
       
       return blob
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to generate PDF'
       setError(errorMessage)
       throw new Error(errorMessage)
@@ -89,7 +89,7 @@ export function usePDFGeneration() {
       }
       
       return blob
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to export trip'
       setError(errorMessage)
       throw new Error(errorMessage)

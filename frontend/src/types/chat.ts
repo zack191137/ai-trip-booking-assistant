@@ -7,7 +7,7 @@ export interface Message {
   metadata?: {
     thinking?: string
     suggestions?: string[]
-    tripData?: any
+    tripData?: unknown
   }
 }
 

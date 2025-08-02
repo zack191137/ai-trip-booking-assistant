@@ -94,7 +94,7 @@ export function TripProvider({ children }: TripProviderProps) {
     try {
       const trips = await tripService.getTrips()
       dispatch({ type: 'SET_TRIPS', payload: trips })
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load trips' })
     }
   }
@@ -104,7 +104,7 @@ export function TripProvider({ children }: TripProviderProps) {
     try {
       const trip = await tripService.getTrip(tripId)
       dispatch({ type: 'SET_CURRENT_TRIP', payload: trip })
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load trip' })
     }
   }
@@ -115,7 +115,7 @@ export function TripProvider({ children }: TripProviderProps) {
       const trip = await tripService.createTrip(tripData)
       dispatch({ type: 'ADD_TRIP', payload: trip })
       return trip
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to create trip' })
       return null
     }
@@ -127,7 +127,7 @@ export function TripProvider({ children }: TripProviderProps) {
       const trip = await tripService.updateTrip(tripId, updates)
       dispatch({ type: 'UPDATE_TRIP', payload: trip })
       return trip
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to update trip' })
       return null
     }
@@ -139,7 +139,7 @@ export function TripProvider({ children }: TripProviderProps) {
       await tripService.deleteTrip(tripId)
       dispatch({ type: 'REMOVE_TRIP', payload: tripId })
       return true
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to delete trip' })
       return false
     }
@@ -172,6 +172,7 @@ export function TripProvider({ children }: TripProviderProps) {
   return <TripContext.Provider value={value}>{children}</TripContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTrip() {
   const context = useContext(TripContext)
   if (context === undefined) {

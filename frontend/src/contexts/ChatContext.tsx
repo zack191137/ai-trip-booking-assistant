@@ -81,7 +81,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'SET_CURRENT_CONVERSATION':
       return { ...state, currentConversation: action.payload, isLoading: false }
     
-    case 'ADD_MESSAGE':
+    case 'ADD_MESSAGE': {
       const updatedConv = state.currentConversation
         ? {
             ...state.currentConversation,
@@ -99,8 +99,9 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
             )
           : state.conversations,
       }
+    }
     
-    case 'UPDATE_MESSAGE':
+    case 'UPDATE_MESSAGE': {
       const updatedConvWithMessage = state.currentConversation
         ? {
             ...state.currentConversation,
@@ -119,6 +120,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
             )
           : state.conversations,
       }
+    }
     
     default:
       return state
@@ -170,7 +172,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     try {
       const conversations = await chatService.getConversations()
       dispatch({ type: 'SET_CONVERSATIONS', payload: conversations })
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load conversations' })
     }
   }
@@ -181,7 +183,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       const conversation = await chatService.createConversation(title)
       dispatch({ type: 'ADD_CONVERSATION', payload: conversation })
       return conversation
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to create conversation' })
       throw error
     }
@@ -192,7 +194,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     try {
       const conversation = await chatService.getConversation(conversationId)
       dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation })
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load conversation' })
     }
   }
@@ -201,7 +203,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     try {
       await chatService.deleteConversation(conversationId)
       dispatch({ type: 'REMOVE_CONVERSATION', payload: conversationId })
-    } catch (error: any) {
+    } catch (error: unknown) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to delete conversation' })
     }
   }
@@ -231,6 +233,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useChat() {
   const context = useContext(ChatContext)
   if (context === undefined) {

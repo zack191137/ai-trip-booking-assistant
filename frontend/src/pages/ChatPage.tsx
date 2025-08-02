@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Box, Typography, Container } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { ChatInterface } from '@/components/chat/ChatInterface'
 import { ConversationList } from '@/components/chat/ConversationList'
 import { useChat } from '@/contexts/ChatContext'

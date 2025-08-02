@@ -75,7 +75,7 @@ export function PDFExportButton({ trip, variant = 'outlined', size = 'medium', d
           setSuccessMessage('Trip data exported as JSON successfully!')
           break
       }
-    } catch (err) {
+    } catch {
       // Error is handled by the hook
     }
   }

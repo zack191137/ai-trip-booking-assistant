@@ -8,11 +8,9 @@ import {
   Chip,
   Button,
   Divider,
-  Avatar,
   Rating,
 } from '@mui/material'
 import {
-  Hotel,
   CalendarToday,
   Person,
   AttachMoney,
@@ -22,7 +20,7 @@ import {
   Pool,
   FitnessCenter,
 } from '@mui/icons-material'
-import { HotelBooking } from '@/types/trip'
+import type { HotelBooking } from '@/types/trip'
 import { format, parseISO } from 'date-fns'
 
 interface HotelBookingCardProps {
@@ -146,15 +144,18 @@ export function HotelBookingCard({ hotel, onBook, onCancel, onViewDetails }: Hot
                 Amenities
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {hotel.amenities.slice(0, 4).map((amenity) => (
-                  <Chip
-                    key={amenity}
-                    label={amenity}
-                    size="small"
-                    variant="outlined"
-                    icon={getAmenityIcon(amenity)}
-                  />
-                ))}
+                {hotel.amenities.slice(0, 4).map((amenity) => {
+                  const amenityIcon = getAmenityIcon(amenity)
+                  return (
+                    <Chip
+                      key={amenity}
+                      label={amenity}
+                      size="small"
+                      variant="outlined"
+                      {...(amenityIcon ? { icon: amenityIcon } : {})}
+                    />
+                  )
+                })}
                 {hotel.amenities.length > 4 && (
                   <Chip
                     label={`+${hotel.amenities.length - 4} more`}

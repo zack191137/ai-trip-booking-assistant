@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { TripDetails } from '@/components/trip/TripDetails'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
@@ -10,15 +10,9 @@ import { TripPlan } from '@/types/trip'
 export function TripDetailsPage() {
   const { tripId } = useParams<{ tripId: string }>()
   const [trip, setTrip] = useState<TripPlan | null>(null)
-  const { executeWithNotification, isLoading, showError } = useErrorWithNotification()
+  const { executeWithNotification, isLoading } = useErrorWithNotification()
 
-  useEffect(() => {
-    if (tripId) {
-      loadTrip(tripId)
-    }
-  }, [tripId])
-
-  const loadTrip = async (id: string) => {
+  const loadTrip = useCallback(async (id: string) => {
     const result = await executeWithNotification(
       () => tripService.getTrip(id),
       { context: `Loading trip ${id}` }
@@ -27,7 +21,13 @@ export function TripDetailsPage() {
     if (result) {
       setTrip(result)
     }
-  }
+  }, [executeWithNotification])
+
+  useEffect(() => {
+    if (tripId) {
+      loadTrip(tripId)
+    }
+  }, [tripId, loadTrip])
 
   const handleEditTrip = (tripId: string) => {
     // TODO: Navigate to trip edit page or open edit modal
