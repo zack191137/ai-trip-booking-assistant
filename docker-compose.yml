@@ -12,7 +12,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET}
-      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - FRONTEND_URL=http://24.199.110.244
     restart: unless-stopped
     networks:
