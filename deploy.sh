@@ -60,6 +60,7 @@ cat > .env << EOF
 # Backend
 NODE_ENV=production
 PORT=3000
+HOST=0.0.0.0
 JWT_SECRET=$(openssl rand -base64 32)
 JWT_EXPIRES_IN=7d
 FRONTEND_URL=http://${DROPLET_IP}
