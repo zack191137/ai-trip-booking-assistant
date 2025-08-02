@@ -38,7 +38,7 @@ An intelligent trip planning and booking assistant powered by Google Gemini AI. 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ai-trip-booking-assistant.git
+git clone https://github.com/zack191137/ai-trip-booking-assistant.git
 cd ai-trip-booking-assistant
 ```
 
