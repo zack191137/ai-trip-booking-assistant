@@ -24,8 +24,7 @@
     "deploy:staging": "./scripts/deploy.sh staging",
     "deploy:production": "./scripts/deploy.sh production",
     "health:check": "curl -f http://localhost:3000/api/health",
-    "precommit": "npm run lint && npm run typecheck && npm run test",
-    "prepare": "npm run build"
+    "precommit": "npm run lint && npm run typecheck && npm run test"
   },
   "keywords": [
     "trip",
