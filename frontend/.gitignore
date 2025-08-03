@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Test coverage
+coverage
+.nyc_output
+
+# Cypress
+cypress/videos
+cypress/screenshots
+
+# Build files
+build

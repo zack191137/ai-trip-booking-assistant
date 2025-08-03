@@ -12,28 +12,20 @@ export default defineConfig({
   },
   server: {
     port: 3001,
+    host: true, // Allow external connections
+    open: true, // Open browser automatically
     proxy: {
+      // Proxy API requests to backend on Digital Ocean
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://ai.zackz.net:3000',
         changeOrigin: true,
+        secure: true,
       },
+      // Proxy WebSocket connections
       '/socket.io': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
+        target: 'wss://ai.zackz.net:3000',
         ws: true,
-      },
-    },
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          mui: ['@mui/material', '@mui/icons-material'],
-          utils: ['axios', 'date-fns'],
-        },
+        changeOrigin: true,
       },
     },
   },

@@ -1,29 +1,42 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Multi-stage build for production optimization
+FROM node:20-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 RUN npm ci
 
+# Build stage
+FROM base AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
 # Copy source files
 COPY . .
 
-# Build the app
+# Build the application
 RUN npm run build
 
-# Production stage - serve with nginx
-FROM nginx:alpine
+# Production stage - using nginx to serve static files
+FROM nginx:alpine AS runner
 
-# Copy built app from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
+# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

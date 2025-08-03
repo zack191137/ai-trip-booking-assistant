@@ -1,69 +1,104 @@
-# React + TypeScript + Vite
+# Trip Booking Assistant - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
+This is the frontend application for the AI-powered Trip Booking Assistant. Built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Prerequisites
+- Node.js 18+ and npm
+- Backend API running (either locally or on Digital Ocean)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Development Setup
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Install Dependencies
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Environment Configuration
+Copy `.env.example` to `.env.local` and update the values:
+```bash
+cp .env.example .env.local
 ```
+
+Update the following variables in `.env.local`:
+- `VITE_API_BASE_URL`: Backend API URL (default: http://localhost:3000/api)
+- `VITE_WS_URL`: WebSocket URL for real-time chat
+- `VITE_GOOGLE_CLIENT_ID`: Your Google OAuth client ID
+
+### 3. Start Development Server
+```bash
+npm run dev
+```
+
+The application will be available at http://localhost:3001
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint errors
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting
+- `npm run type-check` - Run TypeScript type checking
+- `npm run test` - Run tests with Vitest
+- `npm run test:e2e` - Run e2e tests with Cypress
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── components/     # Reusable components
+│   ├── contexts/       # React contexts
+│   ├── hooks/          # Custom hooks
+│   ├── pages/          # Page components
+│   ├── services/       # API and WebSocket services
+│   ├── types/          # TypeScript types
+│   ├── utils/          # Utility functions
+│   └── styles/         # Global styles and theme
+├── public/             # Static assets
+├── Dockerfile          # Docker configuration
+└── nginx.conf          # Nginx configuration for production
+```
+
+## Building for Production
+
+### Local Build
+```bash
+npm run build
+```
+
+### Docker Build
+```bash
+docker build -t ai-booking-frontend .
+```
+
+## Deployment
+
+The frontend is deployed as a Docker container alongside the backend. The deployment script handles:
+1. Building the React application
+2. Creating a Docker image with Nginx
+3. Serving the static files and proxying API requests
+
+## Tech Stack
+
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **UI Library**: Material-UI
+- **State Management**: React Context API
+- **HTTP Client**: Axios
+- **WebSocket**: Socket.io Client
+- **Forms**: React Hook Form
+- **PDF Generation**: jsPDF
+- **Authentication**: Google OAuth
+
+## Features
+
+- Real-time chat interface
+- Trip planning and visualization
+- PDF export for itineraries
+- Google OAuth authentication
+- Dark mode by default
+- Responsive design
