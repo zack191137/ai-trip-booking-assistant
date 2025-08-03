@@ -14,26 +14,26 @@ services:
       - HOST=0.0.0.0
       - JWT_SECRET=${JWT_SECRET}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - FRONTEND_URL=http://24.199.110.244
+      - FRONTEND_URL=https://ai.zackz.net
     restart: unless-stopped
     networks:
       - ai-booking-network
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: ai-booking-frontend
-  #   ports:
-  #     - "80:80"
-  #   environment:
-  #     - VITE_API_URL=http://24.199.110.244:3000
-  #     - VITE_WEBSOCKET_URL=ws://24.199.110.244:3000
-  #   depends_on:
-  #     - backend
-  #   restart: unless-stopped
-  #   networks:
-  #     - ai-booking-network
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-booking-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=https://ai.zackz.net:3000
+      - VITE_WEBSOCKET_URL=wss://ai.zackz.net:3000
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - ai-booking-network
 
 networks:
   ai-booking-network:

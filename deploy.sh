@@ -3,6 +3,7 @@
 # Deployment script for AI Booking Assistant
 
 DROPLET_IP="24.199.110.244"
+DOMAIN="ai.zackz.net"
 USER="root"
 APP_DIR="/opt/ai-booking-assistant"
 GITHUB_REPO="https://github.com/zack191137/ai-trip-booking-assistant"
@@ -14,6 +15,22 @@ if [ -z "$GOOGLE_GEMINI_API_KEY" ]; then
     echo "❌ Error: GOOGLE_GEMINI_API_KEY environment variable is not set"
     echo "Please set it before running: export GOOGLE_GEMINI_API_KEY=your_key_here"
     exit 1
+fi
+
+# Check if GOOGLE_CLIENT_ID is set (optional but recommended)
+if [ -z "$GOOGLE_CLIENT_ID" ]; then
+    echo "⚠️  Warning: GOOGLE_CLIENT_ID environment variable is not set"
+    echo "Google OAuth login will not work without it"
+    echo "Set it with: export GOOGLE_CLIENT_ID=your_client_id_here"
+    echo "Continuing with placeholder value..."
+fi
+
+# Check if GOOGLE_CLIENT_SECRET is set (optional but recommended)
+if [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+    echo "⚠️  Warning: GOOGLE_CLIENT_SECRET environment variable is not set"
+    echo "Google OAuth login will not work without it"
+    echo "Set it with: export GOOGLE_CLIENT_SECRET=your_client_secret_here"
+    echo "Continuing with placeholder value..."
 fi
 
 echo "🔧 Setting up application on server..."
@@ -63,12 +80,18 @@ PORT=3000
 HOST=0.0.0.0
 JWT_SECRET=$(openssl rand -base64 32)
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://${DROPLET_IP}
+FRONTEND_URL=https://${DOMAIN}
 GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
 
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your_google_client_id_here}
+GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your_google_client_secret_here}
+GOOGLE_CALLBACK_URL=https://${DOMAIN}:3000/api/auth/google/callback
+
 # Frontend (for docker-compose)
-VITE_API_URL=http://${DROPLET_IP}:3000
-VITE_WEBSOCKET_URL=ws://${DROPLET_IP}:3000
+VITE_API_URL=https://${DOMAIN}:3000
+VITE_WEBSOCKET_URL=wss://${DOMAIN}:3000
+VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your_google_client_id_here}
 EOF
 
 # Stop existing containers
@@ -101,8 +124,8 @@ echo "✅ Deployment complete!"
 ENDSSH
 
 echo "🎉 Deployment successful!"
-echo "🌐 Frontend: http://${DROPLET_IP}"
-echo "🔌 Backend API: http://${DROPLET_IP}:3000"
+echo "🌐 Frontend: https://${DOMAIN}"
+echo "🔌 Backend API: https://${DOMAIN}:3000"
 echo ""
 echo "📝 To view logs:"
 echo "  ssh ${USER}@${DROPLET_IP} 'cd ${APP_DIR} && docker-compose logs -f'"
