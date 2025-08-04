@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 id: 'unknown',
                 email: 'user@example.com',
                 name: 'Authenticated User',
-                avatar: null
+                avatar: undefined
               });
             }
           }
