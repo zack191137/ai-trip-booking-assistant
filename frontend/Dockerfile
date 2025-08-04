@@ -19,14 +19,24 @@ RUN npm ci
 # Copy source files
 COPY . .
 
-# Use production environment file for production builds
-COPY .env.production .env.local
+# Build arguments for environment variables
+ARG VITE_API_BASE_URL=http://ai.zackz.net:3000/api
+ARG VITE_WS_URL=ws://ai.zackz.net:3000
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_ENVIRONMENT=production
+
+# Set environment variables for build
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
 
 # Debug: Show environment variables
 RUN echo "=== Environment Variables ===" && \
+    echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" && \
+    echo "VITE_WS_URL=$VITE_WS_URL" && \
     echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID" && \
-    echo "Contents of .env.local:" && \
-    cat .env.local || echo "No .env.local file found"
+    echo "VITE_ENVIRONMENT=$VITE_ENVIRONMENT"
 
 # Build the application
 RUN npm run build
