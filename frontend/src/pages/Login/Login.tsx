@@ -53,8 +53,12 @@ export const Login = () => {
     try {
       await loginWithGoogle();
       // Don't navigate here - let the useEffect handle it when isAuthenticated changes
-    } catch {
-      showError('Google login failed. Please try again.');
+    } catch (error: any) {
+      if (error?.message?.includes('Network Error') || error?.code === 'ERR_NETWORK') {
+        showError('Server is currently unavailable. Please try again later.');
+      } else {
+        showError('Google login failed. Please try again.');
+      }
     }
   };
 

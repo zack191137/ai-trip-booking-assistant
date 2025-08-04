@@ -39,6 +39,9 @@ class AuthService {
     localStorage.setItem('token', token);
     this.setAuthHeader(token);
     
+    // Trigger token-updated event for immediate AuthContext update
+    window.dispatchEvent(new Event('token-updated'));
+    
     return response.data;
   }
 
@@ -51,6 +54,9 @@ class AuthService {
     this.token = token;
     localStorage.setItem('token', token);
     this.setAuthHeader(token);
+    
+    // Trigger token-updated event for immediate AuthContext update
+    window.dispatchEvent(new Event('token-updated'));
     
     return response.data;
   }
@@ -78,6 +84,13 @@ class AuthService {
   }
 
   isAuthenticated(): boolean {
+    // Check both internal token and localStorage to handle external token updates
+    const localToken = localStorage.getItem('token');
+    if (localToken && !this.token) {
+      // Sync internal state with localStorage
+      this.token = localToken;
+      this.setAuthHeader(localToken);
+    }
     return !!this.token;
   }
 
