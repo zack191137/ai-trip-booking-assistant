@@ -10,28 +10,26 @@ GITHUB_REPO="https://github.com/zack191137/ai-trip-booking-assistant"
 
 echo "🚀 Starting deployment to DigitalOcean droplet..."
 
-# Check if GOOGLE_GEMINI_API_KEY is set
+# Check if required environment variables are set
 if [ -z "$GOOGLE_GEMINI_API_KEY" ]; then
     echo "❌ Error: GOOGLE_GEMINI_API_KEY environment variable is not set"
     echo "Please set it before running: export GOOGLE_GEMINI_API_KEY=your_key_here"
     exit 1
 fi
 
-# Check if GOOGLE_CLIENT_ID is set (optional but recommended)
 if [ -z "$GOOGLE_CLIENT_ID" ]; then
-    echo "⚠️  Warning: GOOGLE_CLIENT_ID environment variable is not set"
-    echo "Google OAuth login will not work without it"
-    echo "Set it with: export GOOGLE_CLIENT_ID=your_client_id_here"
-    echo "Continuing with placeholder value..."
+    echo "❌ Error: GOOGLE_CLIENT_ID environment variable is not set"
+    echo "Please set it before running: export GOOGLE_CLIENT_ID=your_client_id_here"
+    exit 1
 fi
 
-# Check if GOOGLE_CLIENT_SECRET is set (optional but recommended)
 if [ -z "$GOOGLE_CLIENT_SECRET" ]; then
-    echo "⚠️  Warning: GOOGLE_CLIENT_SECRET environment variable is not set"
-    echo "Google OAuth login will not work without it"
-    echo "Set it with: export GOOGLE_CLIENT_SECRET=your_client_secret_here"
-    echo "Continuing with placeholder value..."
+    echo "❌ Error: GOOGLE_CLIENT_SECRET environment variable is not set"
+    echo "Please set it before running: export GOOGLE_CLIENT_SECRET=your_client_secret_here"
+    exit 1
 fi
+
+echo "✅ Environment variables verified for deployment"
 
 echo "🔧 Setting up application on server..."
 ssh ${USER}@${DROPLET_IP} << ENDSSH
