@@ -18,15 +18,13 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext.hooks';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  
-  // Mock authentication state - will be replaced with real auth context
-  const isAuthenticated = true;
-  const user = { name: 'Demo User', email: 'demo@example.com' };
+  const { isAuthenticated, user, logout } = useAuth();
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -41,9 +39,8 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
     handleMenuClose();
-    navigate('/');
+    logout();
   };
 
   const isActiveRoute = (path: string) => {
@@ -103,7 +100,7 @@ const Header = () => {
                 color="inherit"
               >
                 <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                  {user.name.charAt(0)}
+                  {user?.name?.charAt(0) || 'U'}
                 </Avatar>
               </IconButton>
               <Menu
@@ -131,10 +128,10 @@ const Header = () => {
               >
                 <Box sx={{ px: 2, py: 1 }}>
                   <Typography variant="subtitle2" color="text.primary">
-                    {user.name}
+                    {user?.name || 'User'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {user.email}
+                    {user?.email || ''}
                   </Typography>
                 </Box>
                 <Divider />

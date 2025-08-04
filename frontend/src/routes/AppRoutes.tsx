@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { Landing, Chat, TripDetails, Profile } from '@/pages';
+import { Login } from '@/pages/Login';
 
 const AppRoutes = () => {
   return (
@@ -11,6 +12,14 @@ const AppRoutes = () => {
         element={<Layout showHeader={false} showFooter={false} />}
       >
         <Route index element={<Landing />} />
+      </Route>
+
+      {/* Auth routes without header/footer */}
+      <Route
+        path="/login"
+        element={<Layout showHeader={false} showFooter={false} />}
+      >
+        <Route index element={<Login />} />
       </Route>
 
       {/* App routes with header/footer */}

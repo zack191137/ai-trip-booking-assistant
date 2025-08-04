@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { AuthContext } from './AuthContext.context';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-}
+import authService from '@/services/auth.service';
+import type { User, LoginCredentials, RegisterData } from '@/types';
 
 export interface AuthContextType {
   user: User | null;
@@ -19,17 +15,6 @@ export interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
 }
 
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  name: string;
-}
-
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -39,34 +24,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock authentication for development
+  // Check for existing authentication on mount
   useEffect(() => {
-    // Simulate loading delay
-    const timer = setTimeout(() => {
-      // For now, set a mock user for development
-      setUser({
-        id: '1',
-        email: 'demo@example.com',
-        name: 'Demo User',
-      });
-      setIsLoading(false);
-    }, 1000);
+    const checkAuth = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+        }
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+        authService.logout();
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    checkAuth();
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual login logic
-      console.log('Login attempt:', credentials);
-      
-      // Mock successful login
-      setUser({
-        id: '1',
-        email: credentials.email,
-        name: 'Demo User',
-      });
+      const { user } = await authService.login(credentials);
+      setUser(user);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -75,38 +56,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      try {
+        const { user } = await authService.loginWithGoogle(tokenResponse.access_token);
+        setUser(user);
+      } catch (error) {
+        console.error('Google login failed:', error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google login error:', error);
+    },
+  });
+
   const loginWithGoogle = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      // TODO: Implement Google OAuth login
-      console.log('Google login attempt');
-      
-      // Mock successful Google login
-      setUser({
-        id: '1',
-        email: 'demo@gmail.com',
-        name: 'Demo User',
-      });
-    } catch (error) {
-      console.error('Google login failed:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+    googleLogin();
   };
 
   const register = async (data: RegisterData): Promise<void> => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual registration logic
-      console.log('Register attempt:', data);
-      
-      // Mock successful registration
-      setUser({
-        id: '1',
-        email: data.email,
-        name: data.name,
-      });
+      const { user } = await authService.register(data);
+      setUser(user);
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -116,9 +92,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = (): void => {
+    authService.logout();
     setUser(null);
-    // TODO: Clear tokens, redirect, etc.
-    console.log('User logged out');
+    window.location.href = '/login';
   };
 
   const value: AuthContextType = {
