@@ -62,8 +62,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       try {
         const { user } = await authService.loginWithGoogle(tokenResponse.access_token);
         setUser(user);
+        // Don't handle navigation here - let the component handle it
       } catch (error) {
         console.error('Google login failed:', error);
+        setIsLoading(false);
         throw error;
       } finally {
         setIsLoading(false);
@@ -71,6 +73,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     },
     onError: (error) => {
       console.error('Google login error:', error);
+      setIsLoading(false);
     },
   });
 

@@ -19,17 +19,8 @@ RUN npm ci
 # Copy source files
 COPY . .
 
-# Build arguments for environment variables
-ARG VITE_API_BASE_URL
-ARG VITE_WS_URL
-ARG VITE_GOOGLE_CLIENT_ID
-ARG VITE_ENVIRONMENT
-
-# Set environment variables for build
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_WS_URL=$VITE_WS_URL
-ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
-ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
+# Use production environment file for production builds
+COPY .env.production .env
 
 # Build the application
 RUN npm run build

@@ -29,9 +29,10 @@ export const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
+      showSuccess('Login successful!');
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate, from]);
+  }, [isAuthenticated, isLoading, navigate, from, showSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +52,7 @@ export const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      showSuccess('Login successful!');
-      navigate(from, { replace: true });
+      // Don't navigate here - let the useEffect handle it when isAuthenticated changes
     } catch {
       showError('Google login failed. Please try again.');
     }
