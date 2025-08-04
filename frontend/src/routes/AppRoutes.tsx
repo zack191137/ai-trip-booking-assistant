@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { Landing, Chat, TripDetails, Profile } from '@/pages';
 import { Login } from '@/pages/Login';
+import { ProtectedRoute } from '@/components/common';
 
 const AppRoutes = () => {
   return (
@@ -24,9 +25,21 @@ const AppRoutes = () => {
 
       {/* App routes with header/footer */}
       <Route path="/" element={<Layout />}>
-        <Route path="chat" element={<Chat />} />
-        <Route path="trip/:id" element={<TripDetails />} />
-        <Route path="profile" element={<Profile />} />
+        <Route path="chat" element={
+          <ProtectedRoute redirectTo="/login">
+            <Chat />
+          </ProtectedRoute>
+        } />
+        <Route path="trip/:id" element={
+          <ProtectedRoute redirectTo="/login">
+            <TripDetails />
+          </ProtectedRoute>
+        } />
+        <Route path="profile" element={
+          <ProtectedRoute redirectTo="/login">
+            <Profile />
+          </ProtectedRoute>
+        } />
         
         {/* Placeholder routes for future implementation */}
         <Route path="about" element={<div>About page coming soon...</div>} />
