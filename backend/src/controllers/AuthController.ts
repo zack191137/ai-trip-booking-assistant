@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { authService, LoginCredentials, RegisterData } from '../services/auth/AuthService';
+import { authService, LoginCredentials, RegisterData, GoogleAuthData } from '../services/auth/AuthService';
 import { AppLogger } from '../services/logging';
 import { ApiResponse } from '../types';
 import { AppError } from '../middleware/errorHandler';
@@ -53,6 +53,40 @@ class AuthController {
           message: 'Login successful',
           user: result.user,
           accessToken: result.accessToken,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async googleLogin(req: Request, res: Response<ApiResponse>, next: NextFunction) {
+    try {
+      const googleData: GoogleAuthData = req.body;
+      
+      if (!googleData.token) {
+        throw new AppError('Access token required', 400, 'TOKEN_REQUIRED');
+      }
+
+      const result = await authService.loginWithGoogle(googleData);
+
+      // Log successful Google login
+      AppLogger.logAuthEvent('google_login', result.user.id, true, { email: result.user.email });
+
+      // Set httpOnly cookie
+      res.cookie('accessToken', result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      });
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Google login successful',
+          user: result.user,
+          token: result.accessToken, // Frontend expects 'token' field
         },
       });
     } catch (error) {

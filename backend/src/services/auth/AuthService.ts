@@ -1,5 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { User } from '../../types';
 import { storage } from '../storage';
 import config from '../../config/environment';
@@ -16,6 +17,19 @@ export interface RegisterData {
   name: string;
 }
 
+export interface GoogleAuthData {
+  token: string;
+}
+
+interface GoogleUserInfo {
+  email: string;
+  verified_email: boolean;
+  name: string;
+  given_name?: string;
+  family_name?: string;
+  picture?: string;
+}
+
 export interface AuthTokens {
   accessToken: string;
   user: Omit<User, 'password'>;
@@ -30,6 +44,14 @@ export interface JWTPayload {
 
 class AuthService {
   private readonly saltRounds = 12;
+  private readonly googleClient: OAuth2Client;
+
+  constructor() {
+    this.googleClient = new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
+  }
 
   async register(userData: RegisterData): Promise<AuthTokens> {
     const { email, password, name } = userData;
@@ -99,6 +121,62 @@ class AuthService {
       accessToken,
       user: userWithoutPassword,
     };
+  }
+
+  async loginWithGoogle(googleData: GoogleAuthData): Promise<AuthTokens> {
+    try {
+      // Get user info from Google using the access token
+      const userInfoResponse = await fetch(
+        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${googleData.token}`
+      );
+
+      if (!userInfoResponse.ok) {
+        throw new AppError('Invalid Google access token', 401, 'INVALID_GOOGLE_TOKEN');
+      }
+
+      const googleUser = await userInfoResponse.json() as GoogleUserInfo;
+
+      if (!googleUser.email || !googleUser.verified_email) {
+        throw new AppError('Google account email not verified', 401, 'EMAIL_NOT_VERIFIED');
+      }
+
+      // Check if user exists
+      let user = await storage.users.findByEmail(googleUser.email);
+
+      if (!user) {
+        // Create new user if doesn't exist
+        user = await storage.users.create({
+          email: googleUser.email,
+          name: googleUser.name || googleUser.email.split('@')[0],
+          preferences: {
+            currency: 'USD',
+            language: 'en',
+            notifications: true,
+          },
+          // No password for Google OAuth users
+          password: '',
+        } as any);
+      }
+
+      // Generate access token
+      const accessToken = this.generateAccessToken({
+        userId: user.id,
+        email: user.email,
+      });
+
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user as any;
+
+      return {
+        accessToken,
+        user: userWithoutPassword,
+      };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Google authentication failed', 500, 'GOOGLE_AUTH_FAILED');
+    }
   }
 
   async getUserById(userId: string): Promise<Omit<User, 'password'> | null> {

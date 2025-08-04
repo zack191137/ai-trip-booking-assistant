@@ -14,6 +14,7 @@ const router = Router();
 // Public routes
 router.post('/register', validateBody(registerSchema), authController.register);
 router.post('/login', validateBody(loginSchema), authController.login);
+router.post('/google', authController.googleLogin);
 router.post('/verify-token', authController.verifyToken);
 
 // Protected routes (require authentication)
