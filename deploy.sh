@@ -96,6 +96,12 @@ EOF
 echo "🛑 Stopping existing containers..."
 docker-compose down
 
+# Remove any cached images to force complete rebuild
+echo "🗑️ Removing cached Docker images..."
+docker image rm ai-booking-assistant-frontend:latest 2>/dev/null || true
+docker image rm ai-booking-assistant-backend:latest 2>/dev/null || true
+docker system prune -f
+
 # Build and start containers
 echo "🔨 Building Docker images..."
 docker-compose build --no-cache
