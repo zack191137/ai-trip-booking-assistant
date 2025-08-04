@@ -20,7 +20,13 @@ RUN npm ci
 COPY . .
 
 # Use production environment file for production builds
-COPY .env.production .env
+COPY .env.production .env.local
+
+# Debug: Show environment variables
+RUN echo "=== Environment Variables ===" && \
+    echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID" && \
+    echo "Contents of .env.local:" && \
+    cat .env.local || echo "No .env.local file found"
 
 # Build the application
 RUN npm run build
