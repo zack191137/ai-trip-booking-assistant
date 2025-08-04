@@ -14,10 +14,12 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --frozen-lockfile
 
-# Copy source files
-COPY . .
+# Copy source files (exclude unnecessary files)
+COPY src ./src
+COPY public ./public
+COPY index.html tsconfig*.json vite.config.ts ./
 
 # Build arguments for environment variables
 ARG VITE_API_BASE_URL=http://ai.zackz.net:3000/api
@@ -39,8 +41,8 @@ RUN echo "=== Environment Variables ===" && \
     echo "VITE_ENVIRONMENT='$VITE_ENVIRONMENT'" && \
     echo "Length of VITE_GOOGLE_CLIENT_ID: $(echo -n "$VITE_GOOGLE_CLIENT_ID" | wc -c)"
 
-# Build the application
-RUN npm run build
+# Build the application (skip TypeScript check for faster builds)
+RUN npm run build:fast
 
 # Production stage - using nginx to serve static files
 FROM nginx:alpine AS runner

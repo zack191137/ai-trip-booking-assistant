@@ -10,6 +10,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Optimize build performance
+    target: 'es2022',
+    minify: 'esbuild', // Faster than terser
+    sourcemap: false, // Disable sourcemaps in production for speed
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          mui: ['@mui/material', '@mui/icons-material'],
+        },
+      },
+    },
+  },
   server: {
     port: 3002,
     host: true, // Allow external connections
