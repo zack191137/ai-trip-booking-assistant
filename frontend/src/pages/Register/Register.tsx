@@ -76,7 +76,7 @@ export const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    if (!validateForm() || isSubmitting) {
       return;
     }
     
@@ -88,8 +88,7 @@ export const Register = () => {
         password, 
         name: name.trim() 
       });
-      showSuccess('Registration successful!');
-      navigate(from, { replace: true });
+      // Navigation will be handled by useEffect when isAuthenticated becomes true
     } catch (error) {
       if ((error as NetworkError)?.message?.includes('Network Error') || (error as NetworkError)?.code === 'ERR_NETWORK') {
         showError('Server is currently unavailable. Please try again later.');
