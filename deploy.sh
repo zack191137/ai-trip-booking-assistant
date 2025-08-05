@@ -60,6 +60,7 @@ fi
 if [ -d "${APP_DIR}/.git" ]; then
     echo "📥 Updating existing repository..."
     cd ${APP_DIR}
+    git reset --hard
     git pull origin main
 else
     echo "📥 Cloning repository..."
@@ -131,17 +132,7 @@ if [ ! -f "${APP_DIR}/nginx/backend-ssl.conf" ]; then
 limit_req_zone \$binary_remote_addr zone=api_limit:10m rate=10r/s;
 limit_req_zone \$binary_remote_addr zone=auth_limit:10m rate=5r/m;
 
-# CORS origin mapping - Include all development ports
-map \$http_origin \$cors_origin {
-    default "";
-    "http://localhost:3000" "http://localhost:3000";
-    "http://localhost:3001" "http://localhost:3001";
-    "http://localhost:3002" "http://localhost:3002";
-    "http://localhost:3003" "http://localhost:3003";
-    "http://localhost:5173" "http://localhost:5173";
-    "https://${DOMAIN}" "https://${DOMAIN}";
-    "http://${DOMAIN}" "http://${DOMAIN}";
-}
+# Backend handles CORS - no need for Nginx CORS mapping
 
 upstream backend {
     server localhost:5000;
@@ -241,12 +232,7 @@ server {
         location ~* ^/api/auth/(login|register|google)\$ {
             limit_req zone=auth_limit burst=5 nodelay;
             
-            # Additional CORS headers for auth endpoints
-            add_header Access-Control-Allow-Origin \$cors_origin always;
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
-            add_header Access-Control-Allow-Credentials "true" always;
-            
+            # Let the backend handle CORS headers to avoid conflicts
             proxy_pass http://backend;
             proxy_http_version 1.1;
             proxy_set_header Upgrade \$http_upgrade;
