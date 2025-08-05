@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: ai-booking-backend
     ports:
-      - "3000:3000"
+      - "5000:3000"  # Map internal 3000 to host 5000 for Nginx proxy
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -16,8 +16,8 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3002,http://localhost:5173,https://ai.zackz.net
-      - FRONTEND_URL=https://ai.zackz.net
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - FRONTEND_URL=${FRONTEND_URL}
     restart: unless-stopped
     networks:
       - ai-booking-network
