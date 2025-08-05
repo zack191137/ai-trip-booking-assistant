@@ -209,23 +209,10 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    # CORS headers using mapped origin
-    add_header Access-Control-Allow-Origin \$cors_origin always;
-    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-    add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
-    add_header Access-Control-Allow-Credentials "true" always;
+    # CORS is handled by the Node.js backend
 
     location /api {
-        # Handle OPTIONS requests for CORS
-        if (\$request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin \$cors_origin always;
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
-            add_header Access-Control-Allow-Credentials "true" always;
-            add_header Content-Length 0;
-            add_header Content-Type text/plain;
-            return 204;
-        }
+        # Let backend handle OPTIONS requests for CORS
 
         limit_req zone=api_limit burst=20 nodelay;
         
