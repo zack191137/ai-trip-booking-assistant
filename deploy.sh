@@ -242,6 +242,13 @@ cat > /etc/cron.d/certbot-renewal << 'CRONEOF'
 0 0,12 * * * root certbot renew --quiet --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx"
 CRONEOF
 
+# Ensure docker-compose.yml has correct port mapping
+echo "📝 Verifying Docker port configuration..."
+if grep -q "3000:3000" docker-compose.yml; then
+    echo "🔧 Fixing backend port mapping to 5000:3000..."
+    sed -i 's/- "3000:3000"/- "5000:3000"/' docker-compose.yml
+fi
+
 # Remove any cached images to force complete rebuild
 echo "🗑️ Removing cached Docker images..."
 docker image rm ai-booking-assistant-frontend:latest 2>/dev/null || true
@@ -255,6 +262,23 @@ docker-compose build --no-cache
 echo "🚀 Starting containers..."
 docker-compose up -d
 
+# Wait for backend to be ready before starting Nginx
+echo "⏳ Waiting for backend to start on port 5000..."
+for i in {1..20}; do
+    if curl -s http://localhost:5000/api/health > /dev/null 2>&1; then
+        echo "✅ Backend is ready"
+        break
+    else
+        echo "⏳ Waiting for backend... (attempt \$i/20)"
+        sleep 3
+    fi
+    
+    if [ \$i -eq 20 ]; then
+        echo "⚠️ Backend taking longer than expected"
+        docker-compose logs backend --tail=10
+    fi
+done
+
 # Configure firewall for SSL
 echo "🔥 Configuring firewall..."
 ufw allow 22/tcp
@@ -263,10 +287,21 @@ ufw allow 443/tcp
 ufw allow 3000/tcp
 ufw --force enable
 
-# Start Nginx
+# Start Nginx only after backend is ready
 echo "🚀 Starting Nginx..."
 systemctl start nginx
 systemctl enable nginx
+
+# Verify Nginx is running
+echo "🔍 Verifying Nginx status..."
+if systemctl is-active --quiet nginx; then
+    echo "✅ Nginx is running"
+else
+    echo "❌ Nginx failed to start"
+    echo "Nginx error details:"
+    systemctl status nginx --no-pager
+    journalctl -xeu nginx --no-pager | tail -20
+fi
 
 # Wait for services to start
 echo "⏳ Waiting for services to start..."
@@ -354,7 +389,12 @@ echo ""
 echo "🔒 SSL Certificate:"
 certbot certificates | grep -A 2 "${DOMAIN}" || echo "No certificate found"
 echo ""
-echo "🌐 Port listeners:"
+echo "🌐 Port listeners (showing process names):"
+echo "Port 80   (Frontend): \$(netstat -tlnp | grep ':80 ' | awk '{print \$7}' | head -1)"
+echo "Port 3000 (Nginx SSL): \$(netstat -tlnp | grep ':3000 ' | awk '{print \$7}' | head -1)"
+echo "Port 5000 (Backend): \$(netstat -tlnp | grep ':5000 ' | awk '{print \$7}' | head -1)"
+echo ""
+echo "Detailed port info:"
 netstat -tlnp | grep -E ':(80|443|3000|5000) ' || ss -tlnp | grep -E ':(80|443|3000|5000) '
 echo ""
 echo "🔍 Testing endpoints:"
