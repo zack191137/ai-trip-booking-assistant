@@ -77,7 +77,7 @@ const config: Config = {
     llmPerMinute: parseInt(process.env.LLM_RATE_LIMIT_PER_MINUTE || '20', 10),
   },
   cors: {
-    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',').map(origin => origin.trim()) || ['http://localhost:3000'],
   },
   storage: {
     doSpaces: {
