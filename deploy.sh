@@ -131,6 +131,14 @@ if [ ! -f "${APP_DIR}/nginx/backend-ssl.conf" ]; then
 limit_req_zone \$binary_remote_addr zone=api_limit:10m rate=10r/s;
 limit_req_zone \$binary_remote_addr zone=auth_limit:10m rate=5r/m;
 
+# CORS origin mapping
+map \$http_origin \$cors_origin {
+    default "";
+    "http://localhost:3002" "http://localhost:3002";
+    "https://${DOMAIN}" "https://${DOMAIN}";
+    "http://${DOMAIN}" "http://${DOMAIN}";
+}
+
 upstream backend {
     server localhost:5000;
 }
@@ -206,12 +214,7 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    # Dynamic CORS based on origin
-    set \$cors_origin "";
-    if (\$http_origin ~* ^https?://(localhost:3002|${DOMAIN})\$) {
-        set \$cors_origin \$http_origin;
-    }
-    
+    # CORS headers using mapped origin
     add_header Access-Control-Allow-Origin \$cors_origin always;
     add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
     add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
@@ -220,10 +223,6 @@ server {
     location /api {
         # Handle OPTIONS requests for CORS
         if (\$request_method = 'OPTIONS') {
-            set \$cors_origin "";
-            if (\$http_origin ~* ^https?://(localhost:3002|${DOMAIN})\$) {
-                set \$cors_origin \$http_origin;
-            }
             add_header Access-Control-Allow-Origin \$cors_origin always;
             add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
             add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
