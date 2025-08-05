@@ -22,8 +22,8 @@ COPY public ./public
 COPY index.html tsconfig*.json vite.config.ts ./
 
 # Build arguments for environment variables
-ARG VITE_API_BASE_URL=http://ai.zackz.net:3000/api
-ARG VITE_WS_URL=ws://ai.zackz.net:3000
+ARG VITE_API_BASE_URL=https://ai.zackz.net:3000/api
+ARG VITE_WS_URL=wss://ai.zackz.net:3000
 ARG VITE_GOOGLE_CLIENT_ID
 ARG VITE_ENVIRONMENT=production
 
