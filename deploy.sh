@@ -206,8 +206,23 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
+    add_header Access-Control-Allow-Origin "https://${DOMAIN}" always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+    add_header Access-Control-Allow-Credentials "true" always;
 
     location /api {
+        # Handle OPTIONS requests for CORS
+        if (\$request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "https://${DOMAIN}" always;
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
+            return 204;
+        }
+
         limit_req zone=api_limit burst=20 nodelay;
         
         location ~* ^/api/auth/(login|register|google)\$ {
@@ -257,6 +272,11 @@ server {
         access_log off;
         return 200 "healthy\\n";
         add_header Content-Type text/plain;
+    }
+    
+    # Root location - redirect to /api
+    location = / {
+        return 301 /api;
     }
 }
 NGINXEOF
@@ -344,6 +364,9 @@ systemctl enable nginx
 echo "🔍 Verifying Nginx status..."
 if systemctl is-active --quiet nginx; then
     echo "✅ Nginx is running"
+    # Reload to ensure config is applied
+    systemctl reload nginx
+    echo "✅ Nginx configuration reloaded"
 else
     echo "❌ Nginx failed to start"
     echo "Nginx error details:"
@@ -446,22 +469,26 @@ echo "🔒 SSL Certificate:"
 certbot certificates | grep -A 2 "${DOMAIN}" || echo "No certificate found"
 echo ""
 echo "🌐 Port listeners (showing process names):"
-echo "Port 80   (Nginx Frontend Proxy): \$(netstat -tlnp | grep ':80 ' | awk '{print \$7}' | head -1)"
+echo "Port 80   (Nginx HTTP): \$(netstat -tlnp | grep ':80 ' | awk '{print \$7}' | head -1)"
+echo "Port 443  (Nginx HTTPS): \$(netstat -tlnp | grep ':443 ' | awk '{print \$7}' | head -1)"
+echo "Port 3000 (Nginx API SSL): \$(netstat -tlnp | grep ':3000 ' | awk '{print \$7}' | head -1)"
+echo "Port 5000 (Backend Docker): \$(netstat -tlnp | grep ':5000 ' | awk '{print \$7}' | head -1)"
 echo "Port 8080 (Frontend Docker): \$(netstat -tlnp | grep ':8080 ' | awk '{print \$7}' | head -1)"
-echo "Port 3000 (Nginx SSL): \$(netstat -tlnp | grep ':3000 ' | awk '{print \$7}' | head -1)"
-echo "Port 5000 (Backend): \$(netstat -tlnp | grep ':5000 ' | awk '{print \$7}' | head -1)"
 echo ""
 echo "Detailed port info:"
 netstat -tlnp | grep -E ':(80|443|3000|5000|8080) ' || ss -tlnp | grep -E ':(80|443|3000|5000|8080) '
 echo ""
 echo "🔍 Testing endpoints:"
-echo -n "  HTTP redirect (port 80): "
+echo -n "  Frontend HTTP (port 80): "
 curl -s -o /dev/null -w "%{http_code}" http://${DOMAIN} || echo "Failed"
+echo ""
+echo -n "  Frontend HTTPS (port 443): "
+curl -k -s -o /dev/null -w "%{http_code}" https://${DOMAIN} || echo "Failed"
 echo ""
 echo -n "  Backend direct (port 5000): "
 curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/health || echo "Failed"
 echo ""
-echo -n "  HTTPS API (port 3000): "
+echo -n "  Backend API HTTPS (port 3000): "
 curl -k -s -o /dev/null -w "%{http_code}" https://${DOMAIN}:3000/api/health || echo "Failed"
 echo ""
 ENDSSH
@@ -470,9 +497,10 @@ echo ""
 echo "🎉 Deployment completed successfully!"
 echo ""
 echo "📊 Deployment Summary:"
-echo "  🌐 Frontend: http://${DOMAIN} (redirects to HTTPS)"
-echo "  🔒 Backend:  https://${DOMAIN}:3000"
-echo "  🔌 WebSocket: wss://${DOMAIN}:3000"
+echo "  🌐 Frontend HTTP:  http://${DOMAIN}"
+echo "  🔒 Frontend HTTPS: https://${DOMAIN}"
+echo "  🔐 Backend API:    https://${DOMAIN}:3000/api"
+echo "  🔌 WebSocket:      wss://${DOMAIN}:3000"
 echo ""
 echo "🔐 SSL/TLS Configuration:"
 echo "  📜 Certificate: Let's Encrypt"
