@@ -139,7 +139,16 @@ server {
     listen 80;
     listen [::]:80;
     server_name ${DOMAIN};
-    return 301 https://\$server_name\$request_uri;
+    
+    # Serve frontend from Docker container on port 8080
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
 }
 
 server {
@@ -249,6 +258,10 @@ if grep -q "3000:3000" docker-compose.yml; then
     sed -i 's/- "3000:3000"/- "5000:3000"/' docker-compose.yml
 fi
 
+# Update frontend to use different port to avoid conflict with Nginx
+echo "🔧 Updating frontend port to avoid Nginx conflict..."
+sed -i 's/- "80:80"/- "8080:80"/' docker-compose.yml
+
 # Remove any cached images to force complete rebuild
 echo "🗑️ Removing cached Docker images..."
 docker image rm ai-booking-assistant-frontend:latest 2>/dev/null || true
@@ -346,11 +359,11 @@ for i in {1..5}; do
     fi
 done
 
-# Check frontend
-echo "Checking frontend..."
+# Check frontend on Docker port 8080
+echo "Checking frontend Docker container..."
 for i in {1..5}; do
-    if curl -s http://localhost:80 > /dev/null; then
-        echo "✅ Frontend is accessible"
+    if curl -s http://localhost:8080 > /dev/null; then
+        echo "✅ Frontend container is accessible on port 8080"
         break
     else
         echo "⏳ Waiting for frontend... (attempt \$i/5)"
@@ -364,6 +377,14 @@ for i in {1..5}; do
         exit 1
     fi
 done
+
+# Check frontend through Nginx (port 80)
+echo "Checking frontend through Nginx..."
+if curl -s http://localhost > /dev/null 2>&1; then
+    echo "✅ Frontend accessible through Nginx on port 80"
+else
+    echo "⚠️ Frontend not accessible through Nginx yet"
+fi
 
 # Check SSL certificate
 echo "Checking SSL certificate..."
@@ -390,12 +411,13 @@ echo "🔒 SSL Certificate:"
 certbot certificates | grep -A 2 "${DOMAIN}" || echo "No certificate found"
 echo ""
 echo "🌐 Port listeners (showing process names):"
-echo "Port 80   (Frontend): \$(netstat -tlnp | grep ':80 ' | awk '{print \$7}' | head -1)"
+echo "Port 80   (Nginx Frontend Proxy): \$(netstat -tlnp | grep ':80 ' | awk '{print \$7}' | head -1)"
+echo "Port 8080 (Frontend Docker): \$(netstat -tlnp | grep ':8080 ' | awk '{print \$7}' | head -1)"
 echo "Port 3000 (Nginx SSL): \$(netstat -tlnp | grep ':3000 ' | awk '{print \$7}' | head -1)"
 echo "Port 5000 (Backend): \$(netstat -tlnp | grep ':5000 ' | awk '{print \$7}' | head -1)"
 echo ""
 echo "Detailed port info:"
-netstat -tlnp | grep -E ':(80|443|3000|5000) ' || ss -tlnp | grep -E ':(80|443|3000|5000) '
+netstat -tlnp | grep -E ':(80|443|3000|5000|8080) ' || ss -tlnp | grep -E ':(80|443|3000|5000|8080) '
 echo ""
 echo "🔍 Testing endpoints:"
 echo -n "  HTTP redirect (port 80): "
