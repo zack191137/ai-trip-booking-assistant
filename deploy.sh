@@ -330,20 +330,19 @@ docker-compose build --no-cache
 echo "🚀 Starting containers..."
 docker-compose up -d
 
-# Wait for backend to be ready before starting Nginx
-echo "⏳ Waiting for backend to start on port 5000..."
-for i in {1..20}; do
+# Wait for backend to be ready
+echo "⏳ Waiting for backend to start..."
+for i in {1..15}; do
     if curl -s http://localhost:5000/api/health > /dev/null 2>&1; then
         echo "✅ Backend is ready"
         break
     else
-        echo "⏳ Waiting for backend... (attempt \$i/20)"
         sleep 3
     fi
     
-    if [ \$i -eq 20 ]; then
-        echo "⚠️ Backend taking longer than expected"
-        docker-compose logs backend --tail=10
+    if [ \$i -eq 15 ]; then
+        echo "❌ Backend failed to start"
+        exit 1
     fi
 done
 
@@ -361,158 +360,39 @@ systemctl start nginx
 systemctl enable nginx
 
 # Verify Nginx is running
-echo "🔍 Verifying Nginx status..."
 if systemctl is-active --quiet nginx; then
     echo "✅ Nginx is running"
-    # Reload to ensure config is applied
     systemctl reload nginx
-    echo "✅ Nginx configuration reloaded"
 else
     echo "❌ Nginx failed to start"
-    echo "Nginx error details:"
-    systemctl status nginx --no-pager
-    journalctl -xeu nginx --no-pager | tail -20
+    exit 1
 fi
 
-# Wait for services to start
-echo "⏳ Waiting for services to start..."
-sleep 30
+# Wait for services to stabilize
+sleep 10
 
 # Health checks
 echo "🔍 Performing health checks..."
 
-# Check backend direct connection first (port 5000)
-echo "Checking backend direct connection..."
-for i in {1..10}; do
-    if curl -s http://localhost:5000/api/health > /dev/null 2>&1; then
-        echo "✅ Backend is running on port 5000"
-        break
-    else
-        echo "⏳ Waiting for backend... (attempt \$i/10)"
-        sleep 5
-    fi
-    
-    if [ \$i -eq 10 ]; then
-        echo "❌ Backend not responding on port 5000"
-        echo "Backend logs:"
-        docker-compose logs backend --tail=20
-    fi
-done
+# Quick health checks
+echo -n "Backend: "
+curl -s http://localhost:5000/api/health > /dev/null 2>&1 && echo "✅" || echo "❌"
 
-# Check backend through Nginx SSL proxy
-echo "Checking HTTPS proxy..."
-for i in {1..5}; do
-    if curl -k -s https://localhost:3000/api/health > /dev/null 2>&1; then
-        echo "✅ HTTPS proxy is working"
-        break
-    else
-        echo "⏳ Waiting for HTTPS proxy... (attempt \$i/5)"
-        sleep 3
-    fi
-    
-    if [ \$i -eq 5 ]; then
-        echo "⚠️ HTTPS proxy not responding (may take time to start)"
-        echo "Nginx status:"
-        systemctl status nginx --no-pager || true
-    fi
-done
+echo -n "API SSL: "
+curl -k -s https://localhost:3000/api/health > /dev/null 2>&1 && echo "✅" || echo "❌"
 
-# Check frontend on Docker port 8080
-echo "Checking frontend Docker container..."
-for i in {1..5}; do
-    if curl -s http://localhost:8080 > /dev/null; then
-        echo "✅ Frontend container is accessible on port 8080"
-        break
-    else
-        echo "⏳ Waiting for frontend... (attempt \$i/5)"
-        sleep 3
-    fi
-    
-    if [ \$i -eq 5 ]; then
-        echo "❌ Frontend health check failed"
-        echo "Frontend logs:"
-        docker-compose logs frontend --tail=20
-        exit 1
-    fi
-done
-
-# Check frontend through Nginx (port 80)
-echo "Checking frontend through Nginx..."
-if curl -s http://localhost > /dev/null 2>&1; then
-    echo "✅ Frontend accessible through Nginx on port 80"
-else
-    echo "⚠️ Frontend not accessible through Nginx yet"
-fi
-
-# Check SSL certificate
-echo "Checking SSL certificate..."
-if openssl s_client -servername ${DOMAIN} -connect ${DOMAIN}:3000 </dev/null 2>/dev/null | openssl x509 -noout -dates; then
-    echo "✅ SSL certificate is valid"
-else
-    echo "⚠️  SSL certificate check failed (might be normal if certificate is new)"
-fi
-
-# Show container status
-echo "📊 Container status:"
-docker-compose ps
+echo -n "Frontend: "
+curl -s http://localhost > /dev/null 2>&1 && echo "✅" || echo "❌"
 
 echo "✅ Deployment complete!"
-
-# Additional diagnostics
-echo ""
-echo "📊 Diagnostic Information:"
-echo "------------------------"
-echo "🐳 Docker containers:"
-docker-compose ps
-echo ""
-echo "🔒 SSL Certificate:"
-certbot certificates | grep -A 2 "${DOMAIN}" || echo "No certificate found"
-echo ""
-echo "🌐 Port listeners (showing process names):"
-echo "Port 80   (Nginx HTTP): \$(netstat -tlnp | grep ':80 ' | awk '{print \$7}' | head -1)"
-echo "Port 443  (Nginx HTTPS): \$(netstat -tlnp | grep ':443 ' | awk '{print \$7}' | head -1)"
-echo "Port 3000 (Nginx API SSL): \$(netstat -tlnp | grep ':3000 ' | awk '{print \$7}' | head -1)"
-echo "Port 5000 (Backend Docker): \$(netstat -tlnp | grep ':5000 ' | awk '{print \$7}' | head -1)"
-echo "Port 8080 (Frontend Docker): \$(netstat -tlnp | grep ':8080 ' | awk '{print \$7}' | head -1)"
-echo ""
-echo "Detailed port info:"
-netstat -tlnp | grep -E ':(80|443|3000|5000|8080) ' || ss -tlnp | grep -E ':(80|443|3000|5000|8080) '
-echo ""
-echo "🔍 Testing endpoints:"
-echo -n "  Frontend HTTP (port 80): "
-curl -s -o /dev/null -w "%{http_code}" http://${DOMAIN} || echo "Failed"
-echo ""
-echo -n "  Frontend HTTPS (port 443): "
-curl -k -s -o /dev/null -w "%{http_code}" https://${DOMAIN} || echo "Failed"
-echo ""
-echo -n "  Backend direct (port 5000): "
-curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/health || echo "Failed"
-echo ""
-echo -n "  Backend API HTTPS (port 3000): "
-curl -k -s -o /dev/null -w "%{http_code}" https://${DOMAIN}:3000/api/health || echo "Failed"
-echo ""
 ENDSSH
 
 echo ""
-echo "🎉 Deployment completed successfully!"
+echo "🎉 Deployment completed!"
 echo ""
-echo "📊 Deployment Summary:"
-echo "  🌐 Frontend HTTP:  http://${DOMAIN}"
-echo "  🔒 Frontend HTTPS: https://${DOMAIN}"
-echo "  🔐 Backend API:    https://${DOMAIN}:3000/api"
-echo "  🔌 WebSocket:      wss://${DOMAIN}:3000"
+echo "🌐 Access URLs:"
+echo "  Frontend: https://${DOMAIN}"
+echo "  API:      https://${DOMAIN}:3000/api"
 echo ""
-echo "🔐 SSL/TLS Configuration:"
-echo "  📜 Certificate: Let's Encrypt"
-echo "  🔄 Auto-renewal: Enabled (via cron)"
-echo "  🛡️  Security headers: Enabled"
-echo "  ⚡ HTTP/2: Enabled"
-echo ""
-echo "🔧 Management Commands:"
-echo "  View logs:     ssh ${USER}@${DROPLET_IP} 'cd ${APP_DIR} && docker-compose logs -f'"
-echo "  Restart:       ssh ${USER}@${DROPLET_IP} 'cd ${APP_DIR} && docker-compose restart'"
-echo "  Stop:          ssh ${USER}@${DROPLET_IP} 'cd ${APP_DIR} && docker-compose down'"
-echo "  SSL status:    ssh ${USER}@${DROPLET_IP} 'certbot certificates'"
-echo "  Renew SSL:     ssh ${USER}@${DROPLET_IP} 'certbot renew'"
-echo ""
-echo "✅ All services are running with HTTPS enabled!"
+echo "🔧 Manage with:"
+echo "  ssh ${USER}@${DROPLET_IP} 'cd ${APP_DIR} && docker-compose logs -f'"
