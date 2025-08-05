@@ -206,7 +206,13 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    add_header Access-Control-Allow-Origin "https://${DOMAIN}" always;
+    # Dynamic CORS based on origin
+    set \$cors_origin "";
+    if (\$http_origin ~* ^https?://(localhost:3002|${DOMAIN})\$) {
+        set \$cors_origin \$http_origin;
+    }
+    
+    add_header Access-Control-Allow-Origin \$cors_origin always;
     add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
     add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
     add_header Access-Control-Allow-Credentials "true" always;
@@ -214,7 +220,11 @@ server {
     location /api {
         # Handle OPTIONS requests for CORS
         if (\$request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin "https://${DOMAIN}" always;
+            set \$cors_origin "";
+            if (\$http_origin ~* ^https?://(localhost:3002|${DOMAIN})\$) {
+                set \$cors_origin \$http_origin;
+            }
+            add_header Access-Control-Allow-Origin \$cors_origin always;
             add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
             add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
             add_header Access-Control-Allow-Credentials "true" always;
