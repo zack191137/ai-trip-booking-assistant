@@ -118,16 +118,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     onSuccess: async (tokenResponse) => {
       setIsLoading(true);
       try {
+        console.log('[AuthContext] Google OAuth success, calling backend...');
         const { user } = await authService.loginWithGoogle(tokenResponse.access_token);
+        console.log('[AuthContext] Backend login successful, setting user:', user);
         setUser(user);
+        setIsLoading(false);
         // Trigger auth change event for immediate state update
         window.dispatchEvent(new Event('auth-change'));
+        console.log('[AuthContext] Google login complete, user set and loading stopped');
       } catch (error) {
         console.error('Google login failed:', error);
         setIsLoading(false);
         throw error;
-      } finally {
-        setIsLoading(false);
       }
     },
     onError: (error) => {

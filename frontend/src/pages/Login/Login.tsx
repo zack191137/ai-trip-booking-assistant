@@ -28,7 +28,9 @@ export const Login = () => {
   const from = location.state?.from?.pathname || '/chat';
 
   useEffect(() => {
+    console.log('[Login] Auth state changed:', { isAuthenticated, isLoading, from });
     if (isAuthenticated && !isLoading) {
+      console.log('[Login] Redirecting to:', from);
       showSuccess('Login successful!');
       navigate(from, { replace: true });
     }
@@ -51,9 +53,21 @@ export const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      console.log('[Login] Starting Google login...');
       await loginWithGoogle();
-      // Don't navigate here - let the useEffect handle it when isAuthenticated changes
+      console.log('[Login] Google login completed, checking auth state...');
+      
+      // Add a small delay to ensure state has updated, then check manually
+      setTimeout(() => {
+        if (isAuthenticated) {
+          console.log('[Login] Manual redirect after Google login success');
+          showSuccess('Login successful!');
+          navigate(from, { replace: true });
+        }
+      }, 100);
+      
     } catch (error: any) {
+      console.error('[Login] Google login error:', error);
       if (error?.message?.includes('Network Error') || error?.code === 'ERR_NETWORK') {
         showError('Server is currently unavailable. Please try again later.');
       } else {
