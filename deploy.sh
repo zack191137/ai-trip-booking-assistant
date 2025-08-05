@@ -85,8 +85,8 @@ GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
 GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
 GOOGLE_CALLBACK_URL=https://${DOMAIN}:3000/api/auth/google/callback
 
-# CORS Origins (HTTPS only for production)
-ALLOWED_ORIGINS=https://${DOMAIN},https://localhost:3002
+# CORS Origins - Allow both production and development origins
+ALLOWED_ORIGINS=https://${DOMAIN},http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173
 
 # Frontend (for docker-compose)
 FRONTEND_URL=https://${DOMAIN}
@@ -131,10 +131,14 @@ if [ ! -f "${APP_DIR}/nginx/backend-ssl.conf" ]; then
 limit_req_zone \$binary_remote_addr zone=api_limit:10m rate=10r/s;
 limit_req_zone \$binary_remote_addr zone=auth_limit:10m rate=5r/m;
 
-# CORS origin mapping
+# CORS origin mapping - Include all development ports
 map \$http_origin \$cors_origin {
     default "";
+    "http://localhost:3000" "http://localhost:3000";
+    "http://localhost:3001" "http://localhost:3001";
     "http://localhost:3002" "http://localhost:3002";
+    "http://localhost:3003" "http://localhost:3003";
+    "http://localhost:5173" "http://localhost:5173";
     "https://${DOMAIN}" "https://${DOMAIN}";
     "http://${DOMAIN}" "http://${DOMAIN}";
 }
@@ -236,6 +240,13 @@ server {
         
         location ~* ^/api/auth/(login|register|google)\$ {
             limit_req zone=auth_limit burst=5 nodelay;
+            
+            # Additional CORS headers for auth endpoints
+            add_header Access-Control-Allow-Origin \$cors_origin always;
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            
             proxy_pass http://backend;
             proxy_http_version 1.1;
             proxy_set_header Upgrade \$http_upgrade;
@@ -393,6 +404,16 @@ curl -k -s https://localhost:3000/api/health > /dev/null 2>&1 && echo "✅" || e
 echo -n "Frontend: "
 curl -s http://localhost > /dev/null 2>&1 && echo "✅" || echo "❌"
 
+# Authentication endpoints check
+echo -n "Auth Register Endpoint: "
+curl -k -s -o /dev/null -w "%{http_code}" -X OPTIONS https://localhost:3000/api/auth/register | grep -q "200" && echo "✅" || echo "❌"
+
+echo -n "Auth Login Endpoint: "
+curl -k -s -o /dev/null -w "%{http_code}" -X OPTIONS https://localhost:3000/api/auth/login | grep -q "200" && echo "✅" || echo "❌"
+
+echo -n "CORS Check (localhost:3003): "
+curl -k -s -o /dev/null -w "%{http_code}" -H "Origin: http://localhost:3003" -X OPTIONS https://localhost:3000/api/auth/register | grep -q "200" && echo "✅" || echo "❌"
+
 echo "✅ Deployment complete!"
 ENDSSH
 
@@ -402,6 +423,15 @@ echo ""
 echo "🌐 Access URLs:"
 echo "  Frontend: https://${DOMAIN}"
 echo "  API:      https://${DOMAIN}:3000/api"
+echo ""
+echo "🔐 Authentication System:"
+echo "  Register: https://${DOMAIN}:3000/api/auth/register"
+echo "  Login:    https://${DOMAIN}:3000/api/auth/login"
+echo "  Google:   https://${DOMAIN}:3000/api/auth/google"
+echo ""
+echo "🧪 Development Testing:"
+echo "  CORS enabled for localhost:3000-3003 and 5173"
+echo "  Test registration from local frontend"
 echo ""
 echo "🔧 Manage with:"
 echo "  ssh ${USER}@${DROPLET_IP} 'cd ${APP_DIR} && docker-compose logs -f'"
