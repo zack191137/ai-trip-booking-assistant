@@ -17,6 +17,9 @@ services:
       - AMADEUS_API_SECRET=${AMADEUS_API_SECRET}
       - BOOKING_COM_API_KEY=${BOOKING_COM_API_KEY}
       - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
       - logs_volume:/app/logs
     restart: unless-stopped

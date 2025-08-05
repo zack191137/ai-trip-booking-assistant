@@ -32,8 +32,12 @@ class AuthService {
   }
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, credentials);
-    const { token } = response.data;
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+    
+    // Backend returns nested data structure: { success: true, data: { user, accessToken } }
+    const { data: responseData } = response.data;
+    const token = responseData.accessToken;
+    const user = responseData.user;
     
     this.token = token;
     localStorage.setItem('token', token);
@@ -42,14 +46,18 @@ class AuthService {
     // Trigger token-updated event for immediate AuthContext update
     window.dispatchEvent(new Event('token-updated'));
     
-    return response.data;
+    return { user, token };
   }
 
   async loginWithGoogle(googleToken: string): Promise<LoginResponse> {
-    const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/google`, {
+    const response = await axios.post(`${API_BASE_URL}/auth/google`, {
       token: googleToken,
     });
-    const { token } = response.data;
+    
+    // Backend returns nested data structure: { success: true, data: { user, token } }
+    const { data: responseData } = response.data;
+    const token = responseData.token;
+    const user = responseData.user;
     
     this.token = token;
     localStorage.setItem('token', token);
@@ -58,18 +66,22 @@ class AuthService {
     // Trigger token-updated event for immediate AuthContext update
     window.dispatchEvent(new Event('token-updated'));
     
-    return response.data;
+    return { user, token };
   }
 
   async register(data: RegisterData): Promise<RegisterResponse> {
-    const response = await axios.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, data);
-    const { token } = response.data;
+    const response = await axios.post(`${API_BASE_URL}/auth/register`, data);
+    
+    // Backend returns nested data structure: { success: true, data: { user, accessToken } }
+    const { data: responseData } = response.data;
+    const token = responseData.accessToken;
+    const user = responseData.user;
     
     this.token = token;
     localStorage.setItem('token', token);
     this.setAuthHeader(token);
     
-    return response.data;
+    return { user, token };
   }
 
   async getCurrentUser(): Promise<User> {

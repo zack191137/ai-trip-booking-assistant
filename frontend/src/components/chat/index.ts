@@ -1,2 +1,6 @@
 // Chat component exports
-// TODO: Export chat components as they are created
+export { ChatWindow } from './ChatWindow';
+export { MessageList } from './MessageList';
+export { MessageBubble } from './MessageBubble';
+export { MessageInput } from './MessageInput';
+export { TypingIndicator } from './TypingIndicator';

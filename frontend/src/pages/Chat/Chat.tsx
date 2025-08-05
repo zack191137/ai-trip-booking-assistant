@@ -1,33 +1,29 @@
-import { Box, Container, Typography, Paper } from '@mui/material';
+import { useState } from 'react';
+import { Box, Container } from '@mui/material';
+import { ChatWindow } from '@/components/chat';
+import type { Conversation } from '@/types';
 
 const Chat = () => {
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+
+  const handleConversationChange = (conversation: Conversation) => {
+    setCurrentConversation(conversation);
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Plan Your Trip
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Tell me about your dream destination and I'll help you create the perfect itinerary.
-        </Typography>
-      </Box>
-      
-      <Paper
+    <Container maxWidth="lg" sx={{ py: 2, height: '100vh' }}>
+      <Box
         sx={{
-          height: 'calc(100vh - 200px)',
+          height: 'calc(100vh - 100px)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 2,
+          flexDirection: 'column',
         }}
       >
-        <Typography variant="h6" color="text.secondary">
-          🚧 Chat interface coming soon...
-        </Typography>
-      </Paper>
+        <ChatWindow
+          conversationId={currentConversation?.id}
+          onConversationChange={handleConversationChange}
+        />
+      </Box>
     </Container>
   );
 };

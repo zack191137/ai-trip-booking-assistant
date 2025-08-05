@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { Landing, Chat, TripDetails, Profile } from '@/pages';
 import { Login } from '@/pages/Login';
+import { Register } from '@/pages/Register';
 import { ProtectedRoute } from '@/components/common';
 
 const AppRoutes = () => {
@@ -21,6 +22,13 @@ const AppRoutes = () => {
         element={<Layout showHeader={false} showFooter={false} />}
       >
         <Route index element={<Login />} />
+      </Route>
+
+      <Route
+        path="/register"
+        element={<Layout showHeader={false} showFooter={false} />}
+      >
+        <Route index element={<Register />} />
       </Route>
 
       {/* App routes with header/footer */}

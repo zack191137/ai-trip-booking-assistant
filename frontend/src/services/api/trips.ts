@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { TripPlan, TripPreferences } from '@/types';
+import type { TripPlan, TripPreferences, Activity } from '@/types';
 
 // Raw API response types (with string dates)
 interface RawTripPlan {
@@ -66,12 +66,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 
 export interface GetTripsResponse {
   success: boolean;
-  data: TripPlan[];
+  data: RawTripPlan[];
 }
 
 export interface GetTripResponse {
   success: boolean;
-  data: TripPlan;
+  data: RawTripPlan;
 }
 
 export interface GenerateTripRequest {
@@ -81,7 +81,7 @@ export interface GenerateTripRequest {
 
 export interface GenerateTripResponse {
   success: boolean;
-  data: TripPlan;
+  data: RawTripPlan;
 }
 
 export interface UpdateTripRequest {
@@ -94,12 +94,12 @@ export interface UpdateTripRequest {
 
 export interface UpdateTripResponse {
   success: boolean;
-  data: TripPlan;
+  data: RawTripPlan;
 }
 
 export interface ConfirmTripResponse {
   success: boolean;
-  data: TripPlan;
+  data: RawTripPlan;
 }
 
 class TripsService {
@@ -130,8 +130,8 @@ class TripsService {
         reservationTime: new Date(restaurant.reservationTime),
       })),
       itinerary: trip.itinerary.map((day: RawDayPlan) => ({
-        ...day,
         date: new Date(day.date),
+        activities: day.activities as Activity[],
       })),
     };
   }

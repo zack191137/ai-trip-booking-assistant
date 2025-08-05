@@ -20,45 +20,85 @@ interface NetworkError extends Error {
   code?: string;
 }
 
-export const Login = () => {
+export const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle, isAuthenticated, isLoading } = useAuth();
+  const { register, loginWithGoogle, isAuthenticated, isLoading } = useAuth();
   const { showError, showSuccess } = useError();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const from = location.state?.from?.pathname || '/chat';
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      showSuccess('Login successful!');
+      showSuccess('Registration successful!');
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, from, showSuccess]);
 
+  const validateForm = () => {
+    if (!name.trim()) {
+      showError('Please enter your full name');
+      return false;
+    }
+    if (name.trim().length < 2) {
+      showError('Name must be at least 2 characters long');
+      return false;
+    }
+    if (!email.trim()) {
+      showError('Please enter your email address');
+      return false;
+    }
+    if (!password.trim()) {
+      showError('Please enter a password');
+      return false;
+    }
+    if (password.length < 8) {
+      showError('Password must be at least 8 characters long');
+      return false;
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      showError('Password must contain at least one lowercase letter, one uppercase letter, and one number');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      showError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      showError('Please enter both email and password');
+    
+    if (!validateForm()) {
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      await login({ email: email.trim(), password });
-      showSuccess('Login successful!');
+      await register({ 
+        email: email.trim(), 
+        password, 
+        name: name.trim() 
+      });
+      showSuccess('Registration successful!');
       navigate(from, { replace: true });
     } catch (error) {
       if ((error as NetworkError)?.message?.includes('Network Error') || (error as NetworkError)?.code === 'ERR_NETWORK') {
         showError('Server is currently unavailable. Please try again later.');
-      } else if ((error as NetworkError)?.message?.includes('401') || (error as NetworkError)?.message?.includes('Invalid')) {
-        showError('Invalid email or password. Please check your credentials.');
+      } else if ((error as NetworkError)?.message?.includes('409') || (error as NetworkError)?.message?.includes('already exists')) {
+        showError('An account with this email already exists. Please try logging in instead.');
+      } else if ((error as NetworkError)?.message?.includes('validation')) {
+        showError('Please check your input and try again.');
       } else {
-        showError('Login failed. Please try again.');
+        showError('Registration failed. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -72,7 +112,7 @@ export const Login = () => {
       // Add a small delay to ensure state has updated, then check manually
       setTimeout(() => {
         if (isAuthenticated) {
-          showSuccess('Login successful!');
+          showSuccess('Registration successful!');
           navigate(from, { replace: true });
         }
       }, 100);
@@ -81,7 +121,7 @@ export const Login = () => {
       if ((error as NetworkError)?.message?.includes('Network Error') || (error as NetworkError)?.code === 'ERR_NETWORK') {
         showError('Server is currently unavailable. Please try again later.');
       } else {
-        showError('Google login failed. Please try again.');
+        showError('Google registration failed. Please try again.');
       }
     }
   };
@@ -107,10 +147,10 @@ export const Login = () => {
       >
         <Paper elevation={3} sx={{ p: 4 }}>
           <Typography variant="h4" component="h1" align="center" gutterBottom>
-            Welcome Back
+            Create Account
           </Typography>
           <Typography variant="body2" color="text.secondary" align="center" mb={3}>
-            Sign in to continue to Trip Booking Assistant
+            Join Trip Booking Assistant to start planning your adventures
           </Typography>
 
           {location.state?.message && (
@@ -122,6 +162,30 @@ export const Login = () => {
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
+              label="Full Name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              margin="normal"
+              required
+              autoComplete="name"
+              autoFocus
+              error={!name.trim() && isSubmitting}
+              helperText={!name.trim() && isSubmitting ? 'Full name is required' : ''}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                },
+              }}
+            />
+            <TextField
+              fullWidth
               label="Email Address"
               type="email"
               value={email}
@@ -129,7 +193,6 @@ export const Login = () => {
               margin="normal"
               required
               autoComplete="email"
-              autoFocus
               error={!email.trim() && isSubmitting}
               helperText={!email.trim() && isSubmitting ? 'Email is required' : ''}
               sx={{
@@ -152,9 +215,46 @@ export const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               margin="normal"
               required
-              autoComplete="current-password"
-              error={!password.trim() && isSubmitting}
-              helperText={!password.trim() && isSubmitting ? 'Password is required' : ''}
+              autoComplete="new-password"
+              error={(!password.trim() || password.length < 8 || !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) && isSubmitting}
+              helperText={
+                !password.trim() && isSubmitting 
+                  ? 'Password is required' 
+                  : password.length > 0 && password.length < 8 && isSubmitting
+                  ? 'Password must be at least 8 characters'
+                  : password.length >= 8 && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password) && isSubmitting
+                  ? 'Password must contain lowercase, uppercase, and number'
+                  : !isSubmitting && password.length === 0
+                  ? 'Minimum 8 characters with lowercase, uppercase, and number'
+                  : ''
+              }
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Confirm Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              margin="normal"
+              required
+              autoComplete="new-password"
+              error={password !== confirmPassword && isSubmitting && confirmPassword.length > 0}
+              helperText={
+                password !== confirmPassword && isSubmitting && confirmPassword.length > 0
+                  ? 'Passwords do not match'
+                  : ''
+              }
               sx={{
                 '& .MuiOutlinedInput-root': {
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -172,7 +272,7 @@ export const Login = () => {
               fullWidth
               variant="contained"
               size="large"
-              disabled={isSubmitting || (!email.trim() || !password.trim())}
+              disabled={isSubmitting || (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim())}
               sx={{ 
                 mt: 3, 
                 mb: 2,
@@ -184,10 +284,10 @@ export const Login = () => {
               {isSubmitting ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CircularProgress size={20} color="inherit" />
-                  Signing In...
+                  Creating Account...
                 </Box>
               ) : (
-                'Sign In with Email'
+                'Create Account'
               )}
             </Button>
           </Box>
@@ -207,13 +307,13 @@ export const Login = () => {
 
           <Box mt={3} textAlign="center">
             <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
+              Already have an account?{' '}
               <Button
                 color="primary"
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/login')}
                 sx={{ textTransform: 'none' }}
               >
-                Sign up
+                Sign in
               </Button>
             </Typography>
           </Box>

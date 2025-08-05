@@ -55,7 +55,7 @@ export const errorHandler = (
     method: req.method,
     statusCode,
     code,
-    userId: req.user?.id || 'anonymous'
+    userId: (req as any).user?.id || 'anonymous'
   });
 
   res.status(statusCode).json({
