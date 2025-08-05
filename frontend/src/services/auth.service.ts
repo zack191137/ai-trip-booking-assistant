@@ -46,18 +46,15 @@ class AuthService {
   }
 
   async loginWithGoogle(googleToken: string): Promise<LoginResponse> {
-    console.log('[AuthService] Calling backend with Google token...');
     const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/google`, {
       token: googleToken,
     });
     const { token } = response.data;
     
-    console.log('[AuthService] Backend responded with token, storing...');
     this.token = token;
     localStorage.setItem('token', token);
     this.setAuthHeader(token);
     
-    console.log('[AuthService] Token stored, dispatching events...');
     // Trigger token-updated event for immediate AuthContext update
     window.dispatchEvent(new Event('token-updated'));
     

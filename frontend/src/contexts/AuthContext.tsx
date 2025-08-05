@@ -5,6 +5,13 @@ import { AuthContext } from './AuthContext.context';
 import authService from '@/services/auth.service';
 import type { User, LoginCredentials, RegisterData } from '@/types';
 
+// Error type for API responses
+interface ApiError {
+  response?: {
+    status: number;
+  };
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -27,25 +34,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Check for existing authentication on mount and listen for changes
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('[AuthContext] checkAuth called, isAuthenticated:', authService.isAuthenticated());
       try {
         if (authService.isAuthenticated()) {
           try {
             const currentUser = await authService.getCurrentUser();
-            console.log('[AuthContext] Setting user:', currentUser);
             setUser(currentUser);
-          } catch (userError: any) {
-            console.warn('[AuthContext] Failed to fetch current user, but token exists:', userError.message);
+          } catch (userError) {
             // If we have a token but can't fetch user (e.g., backend unavailable),
             // create a minimal user object to maintain authenticated state
-            if (userError.response?.status === 401) {
+            if ((userError as ApiError).response?.status === 401) {
               // Token is invalid, clear it
-              console.log('[AuthContext] Token invalid (401), clearing auth');
               authService.logout();
               setUser(null);
             } else {
               // Backend unavailable or other error, maintain auth state with minimal user
-              console.log('[AuthContext] Backend unavailable, maintaining auth state with placeholder user');
               setUser({
                 id: 'unknown',
                 email: 'user@example.com',
@@ -55,24 +57,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             }
           }
         } else {
-          console.log('[AuthContext] Not authenticated, clearing user');
           setUser(null);
         }
-      } catch (error) {
-        console.error('[AuthContext] Unexpected error in checkAuth:', error);
-        setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     // Check auth on mount
-    console.log('[AuthContext] Initial auth check');
     checkAuth();
 
     // Listen for storage changes (for OAuth popup completion)
     const handleStorageChange = (e: StorageEvent) => {
-      console.log('[AuthContext] Storage event received:', e.key, e.newValue ? 'token present' : 'token removed');
       if (e.key === 'token') {
         checkAuth();
       }
@@ -80,13 +76,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Listen for custom auth events (for same-window OAuth)
     const handleAuthChange = () => {
-      console.log('[AuthContext] Auth-change event received');
       checkAuth();
     };
 
     // Also listen for a custom token-updated event for immediate updates
     const handleTokenUpdate = () => {
-      console.log('[AuthContext] Token-updated event received');
       checkAuth();
     };
 
@@ -106,9 +100,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const { user } = await authService.login(credentials);
       setUser(user);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -118,22 +109,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     onSuccess: async (tokenResponse) => {
       setIsLoading(true);
       try {
-        console.log('[AuthContext] Google OAuth success, calling backend...');
         const { user } = await authService.loginWithGoogle(tokenResponse.access_token);
-        console.log('[AuthContext] Backend login successful, setting user:', user);
         setUser(user);
         setIsLoading(false);
         // Trigger auth change event for immediate state update
         window.dispatchEvent(new Event('auth-change'));
-        console.log('[AuthContext] Google login complete, user set and loading stopped');
       } catch (error) {
-        console.error('Google login failed:', error);
         setIsLoading(false);
         throw error;
       }
     },
-    onError: (error) => {
-      console.error('Google login error:', error);
+    onError: () => {
       setIsLoading(false);
     },
   });
@@ -147,9 +133,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const { user } = await authService.register(data);
       setUser(user);
-    } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
     } finally {
       setIsLoading(false);
     }
