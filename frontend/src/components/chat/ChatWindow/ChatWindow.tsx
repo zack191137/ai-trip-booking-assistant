@@ -64,9 +64,24 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
     
     setMessages(prev => {
       // Check if message already exists (avoid duplicates)
-      // Handle cases where message might not have an ID yet
-      const exists = message.id ? prev.some(m => m.id === message.id) : false;
-      console.log(`📝 Adding message to state. Has ID: ${!!message.id}, Exists: ${exists}, Current count: ${prev.length}`);
+      // Check both by ID and by content+role combination for temp messages
+      const existsById = message.id ? prev.some(m => m.id === message.id) : false;
+      const existsByContent = prev.some(m => 
+        m.role === message.role && 
+        m.content === message.content &&
+        Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 5000 // Within 5 seconds
+      );
+      
+      const exists = existsById || existsByContent;
+      console.log(`📝 Adding message to state:`, {
+        hasID: !!message.id,
+        existsById,
+        existsByContent,
+        exists,
+        currentCount: prev.length,
+        messageRole: message.role,
+        messageContent: message.content.substring(0, 30) + '...'
+      });
      
       if (exists) {
         console.log('⚠️ Message already exists, skipping');
@@ -221,16 +236,9 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
 
       // If WebSocket is connected, let it handle the message
       if (isConnected) {
-        // Still add optimistic UI update
-        const userMessage: Message = {
-          id: `temp-${Date.now()}`,
-          role: 'user',
-          content: content.trim(),
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, userMessage]);
-        
-        // WebSocket will handle the actual sending
+        // Don't add optimistic update - let WebSocket handle both user and AI messages
+        // This prevents duplicate user messages
+        console.log('🚀 Sending message via WebSocket (no optimistic update)');
         sendWebSocketMessage(content.trim());
       } else {
         // Fallback to HTTP API if WebSocket is not connected
