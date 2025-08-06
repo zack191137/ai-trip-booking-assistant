@@ -388,6 +388,10 @@ curl -k -s -o /dev/null -w "%{http_code}" -X OPTIONS https://localhost:3000/api/
 echo -n "CORS Check (localhost:3003): "
 curl -k -s -o /dev/null -w "%{http_code}" -H "Origin: http://localhost:3003" -X OPTIONS https://localhost:3000/api/auth/register | grep -q "200" && echo "✅" || echo "❌"
 
+# Clean up any local changes made during deployment
+echo "🧹 Cleaning up deployment artifacts..."
+git reset --hard HEAD
+
 echo "✅ Deployment complete!"
 ENDSSH
 

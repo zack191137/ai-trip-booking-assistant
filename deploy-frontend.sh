@@ -120,6 +120,11 @@ curl -k -s https://localhost/favicon.ico > /dev/null 2>&1 && echo "✅" || echo 
 echo "📋 Running containers:"
 docker-compose ps
 
+# Clean up any local changes made during deployment
+echo "🧹 Cleaning up deployment artifacts..."
+git reset --hard HEAD
+rm -f frontend/.env.local  # Remove temporary build env file
+
 echo "✅ Frontend deployment complete!"
 ENDSSH
 

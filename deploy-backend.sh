@@ -111,6 +111,10 @@ curl -k -s -o /dev/null -w "%{http_code}" -X OPTIONS https://localhost:3000/api/
 echo "📋 Running containers:"
 docker-compose ps
 
+# Clean up any local changes made during deployment
+echo "🧹 Cleaning up deployment artifacts..."
+git reset --hard HEAD
+
 echo "✅ Backend deployment complete!"
 ENDSSH
 
