@@ -30,7 +30,8 @@ export class LLMService {
     // this.providers.set('anthropic', new AnthropicProvider(config));
 
     if (this.providers.size === 0) {
-      throw new LLMError('No LLM providers configured', 'system', 'NO_PROVIDERS');
+      console.warn('⚠️ No LLM providers configured. AI responses will be simulated.');
+      // Don't throw error, let the service work with mock responses
     }
 
     // Set fallback providers
@@ -162,6 +163,14 @@ export class LLMService {
   ): Promise<T> {
     const provider = this.providers.get(this.activeProvider);
     if (!provider) {
+      // Return mock response when no providers are configured
+      console.warn('No LLM provider available, returning mock response');
+      
+      // Check if this is a conversation response
+      if (operation.toString().includes('generateResponse')) {
+        return "I'm currently running without an AI backend. To enable AI responses, please configure a GEMINI_API_KEY in your environment variables. For now, I can acknowledge that I received your message!" as unknown as T;
+      }
+      
       throw new LLMError(`Active provider ${this.activeProvider} not available`, 'system', 'PROVIDER_UNAVAILABLE');
     }
 

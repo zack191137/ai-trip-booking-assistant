@@ -185,7 +185,11 @@ class SocketClient {
       throw new Error('WebSocket not connected');
     }
     
-    this.socket.emit('sendMessage', { conversationId, content });
+    this.socket.emit('sendMessage', { 
+      conversationId, 
+      content,
+      timestamp: new Date()
+    });
   }
 
   // Typing indicators
