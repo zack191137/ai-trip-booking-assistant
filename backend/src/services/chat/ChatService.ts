@@ -31,21 +31,31 @@ export class ChatService {
   }
 
   private setupSocketHandlers(): void {
-    this.io.on('connection', (socket: Socket) => {
+    this.io.on('connection', async (socket: Socket) => {
       console.log(`Client connected: ${socket.id}`);
       
-      // Handle authentication
-      socket.on('authenticate', async (data: { token: string }) => {
-        try {
-          await this.authenticateSocket(socket, data.token);
-        } catch (error) {
+      // Handle authentication from connection handshake
+      try {
+        const token = (socket.handshake.auth as any)?.token;
+        if (!token) {
           socket.emit('error', {
-            message: 'Authentication failed',
-            code: 'AUTH_FAILED'
+            message: 'No authentication token provided',
+            code: 'NO_TOKEN'
           });
           socket.disconnect();
+          return;
         }
-      });
+
+        await this.authenticateSocket(socket, token);
+        console.log(`Socket authenticated for user: ${(socket as any).userId}`);
+      } catch (error) {
+        socket.emit('error', {
+          message: 'Authentication failed',
+          code: 'AUTH_FAILED'
+        });
+        socket.disconnect();
+        return;
+      }
 
       // Handle joining conversations
       socket.on('joinConversation', async (conversationId: string) => {

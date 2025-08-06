@@ -85,8 +85,8 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await axios.get<User>(`${API_BASE_URL}/auth/profile`);
-    return response.data;
+    const response = await axios.get<{success: boolean; data: {user: User}}>(`${API_BASE_URL}/auth/profile`);
+    return response.data.data.user;
   }
 
   logout() {
