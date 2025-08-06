@@ -85,7 +85,7 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await axios.get<User>(`${API_BASE_URL}/auth/me`);
+    const response = await axios.get<User>(`${API_BASE_URL}/auth/profile`);
     return response.data;
   }
 
