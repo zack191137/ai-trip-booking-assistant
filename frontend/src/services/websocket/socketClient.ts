@@ -61,6 +61,14 @@ class SocketClient {
       return;
     }
 
+    // Clean up existing socket before creating new one
+    if (this.socket) {
+      console.log('Cleaning up existing socket before reconnecting');
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+
     console.log('Connecting to WebSocket:', wsUrl);
 
     this.socket = io(wsUrl, {
@@ -68,18 +76,16 @@ class SocketClient {
         token,
       },
       transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: this.maxReconnectAttempts,
-      reconnectionDelay: this.reconnectDelay,
-      reconnectionDelayMax: 10000,
+      reconnection: false, // Disable automatic reconnection to prevent loops
       timeout: 20000,
       autoConnect: false, // Don't auto-connect, we'll connect manually
     });
     
+    // Setup event listeners before connecting
+    this.setupEventListeners();
+    
     // Connect manually after setup
     this.socket.connect();
-
-    this.setupEventListeners();
   }
 
   private setupEventListeners(): void {
@@ -111,10 +117,18 @@ class SocketClient {
       
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
         console.error('Max reconnection attempts reached');
-        this.disconnect();
+        this.notifyConnectionListeners(false);
       } else {
-        // Exponential backoff
-        this.reconnectDelay = Math.min(this.reconnectDelay * 2, 10000);
+        // Manual reconnection with exponential backoff
+        const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
+        console.log(`Retrying connection in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        
+        setTimeout(() => {
+          if (authService.isAuthenticated() && !this.socket?.connected && !this.socket?.connecting) {
+            console.log('Attempting manual reconnection...');
+            this.connect();
+          }
+        }, delay);
       }
     });
 
@@ -133,9 +147,14 @@ class SocketClient {
   disconnect(): void {
     if (this.socket) {
       console.log('Disconnecting WebSocket');
+      this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
       this.notifyConnectionListeners(false);
+      
+      // Reset connection state
+      this.reconnectAttempts = 0;
+      this.reconnectDelay = 1000;
     }
   }
 
