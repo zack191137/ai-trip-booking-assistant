@@ -29,6 +29,15 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     onError,
   } = options;
 
+  console.log('🎯 useWebSocket hook called with:', {
+    conversationId,
+    hasOnMessage: !!onMessage,
+    hasOnMessageUpdate: !!onMessageUpdate,
+    hasOnConversationUpdate: !!onConversationUpdate,
+    hasOnTyping: !!onTyping,
+    hasOnError: !!onError,
+  });
+
   const [isConnected, setIsConnected] = useState(socketClient.isConnected());
   const currentConversationRef = useRef<string | undefined>(conversationId);
 
@@ -60,9 +69,11 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
 
   // Event listeners
   useEffect(() => {
+    console.log('🔧 Setting up WebSocket event listeners');
     const unsubscribers: Array<() => void> = [];
 
     if (onMessage) {
+      console.log('✅ Setting up message event listener');
       unsubscribers.push(
         socketClient.on('message', ({ conversationId, message }) => {
           console.log('🔄 Processing message event in useWebSocket:', {
@@ -124,6 +135,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
 
     // Cleanup all listeners
     return () => {
+      console.log('🧹 Cleaning up WebSocket event listeners');
       unsubscribers.forEach(unsubscribe => unsubscribe());
     };
   }, [onMessage, onMessageUpdate, onConversationUpdate, onTyping, onError]);
