@@ -7,7 +7,6 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 
 import config from './config/environment';
-import corsMiddleware from './middleware/cors';
 import { apiLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import Logger from './services/logging/Logger';
@@ -24,11 +23,7 @@ class App {
     this.app = express();
     this.server = createServer(this.app);
     this.io = new SocketIOServer(this.server, {
-      cors: {
-        origin: config.cors.allowedOrigins,
-        methods: ['GET', 'POST'],
-        credentials: true,
-      },
+      // CORS handling moved to Nginx
     });
 
     this.initializeMiddleware();
@@ -45,8 +40,7 @@ class App {
       crossOriginEmbedderPolicy: false,
     }));
 
-    // CORS
-    this.app.use(corsMiddleware);
+    // CORS handling moved to Nginx
 
     // Rate limiting
     this.app.use('/api/', apiLimiter);
