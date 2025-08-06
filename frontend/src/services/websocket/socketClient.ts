@@ -92,6 +92,11 @@ class SocketClient {
     // Setup event listeners before connecting
     this.setupEventListeners();
     
+    // Add a catch-all listener for debugging
+    this.socket.onAny((eventName, ...args) => {
+      console.log('🔥 CATCH-ALL: Received any event:', eventName, args);
+    });
+    
     // Connect manually after setup
     this.socket.connect();
   }
@@ -288,6 +293,9 @@ class SocketClient {
 
 // Create singleton instance
 const socketClient = new SocketClient();
+
+// Temporarily expose for debugging
+(window as any).debugSocketClient = socketClient;
 
 // Debounce helper to prevent rapid reconnection attempts
 let authChangeTimeout: NodeJS.Timeout | null = null;
