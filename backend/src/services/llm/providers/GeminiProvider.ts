@@ -16,7 +16,7 @@ export class GeminiProvider implements LLMProvider {
 
   constructor(config: ProviderConfig) {
     this.config = {
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash-exp',
       temperature: 0.7,
       maxTokens: 2048,
       timeout: 30000,
@@ -29,7 +29,7 @@ export class GeminiProvider implements LLMProvider {
 
     this.genAI = new GoogleGenerativeAI(config.apiKey);
     this.model = this.genAI.getGenerativeModel({ 
-      model: this.config.model || 'gemini-1.5-flash',
+      model: this.config.model || 'gemini-2.0-flash-exp',
       generationConfig: {
         temperature: this.config.temperature,
         maxOutputTokens: this.config.maxTokens,
