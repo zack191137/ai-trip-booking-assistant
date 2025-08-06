@@ -26,22 +26,48 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // WebSocket handlers
-  const handleWebSocketMessage = useCallback((_conversationId: string, message: Message) => {
+  // WebSocket handlers  
+  const handleWebSocketMessage = useCallback((_conversationId: string, data: Message | Conversation) => {
     console.log('🔄 ChatWindow handleWebSocketMessage called:', {
       conversationId: _conversationId,
-      messageRole: message?.role,
-      messageContent: message?.content?.substring(0, 50) + '...',
-      messageId: message?.id,
-      timestamp: message?.timestamp
+      dataType: typeof data,
+      dataKeys: data ? Object.keys(data) : null,
+      rawData: data
     });
+    
+    // Check if data is a Conversation object (has messages array)
+    let message: Message;
+    if (data && 'messages' in data && Array.isArray(data.messages)) {
+      // Backend sent a Conversation object, extract the latest message
+      const conversation = data as Conversation;
+      const messages = conversation.messages;
+      message = messages[messages.length - 1]; // Get the latest message
+      console.log('📦 Extracted message from conversation:', {
+        messageRole: message?.role,
+        messageContent: message?.content?.substring(0, 50) + '...',
+        messageId: message?.id
+      });
+    } else {
+      // Backend sent a Message object directly
+      message = data as Message;
+      console.log('📨 Direct message received:', {
+        messageRole: message?.role,
+        messageContent: message?.content?.substring(0, 50) + '...',
+        messageId: message?.id
+      });
+    }
+    
+    if (!message) {
+      console.error('❌ No valid message found in data:', data);
+      return;
+    }
     
     setMessages(prev => {
       // Check if message already exists (avoid duplicates)
       // Handle cases where message might not have an ID yet
       const exists = message.id ? prev.some(m => m.id === message.id) : false;
       console.log(`📝 Adding message to state. Has ID: ${!!message.id}, Exists: ${exists}, Current count: ${prev.length}`);
-      
+     
       if (exists) {
         console.log('⚠️ Message already exists, skipping');
         return prev;
@@ -108,7 +134,7 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
   }, [messages]);
 
   // Load conversation when conversationId changes
-  const prevConversationIdRef = useRef<string | undefined>();
+  const prevConversationIdRef = useRef<string | undefined>(undefined);
   const hasInitialized = useRef(false);
   
   useEffect(() => {

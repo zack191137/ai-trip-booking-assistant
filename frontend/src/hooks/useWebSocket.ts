@@ -4,7 +4,7 @@ import type { Message, Conversation } from '@/types';
 
 interface UseWebSocketOptions {
   conversationId?: string;
-  onMessage?: (conversationId: string, message: Message) => void;
+  onMessage?: (conversationId: string, data: Message | Conversation) => void;
   onMessageUpdate?: (conversationId: string, messageId: string, message: Message) => void;
   onConversationUpdate?: (conversation: Conversation) => void;
   onTyping?: (conversationId: string, userId: string, isTyping: boolean) => void;
@@ -94,12 +94,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     const unsubscribers: Array<() => void> = [];
 
     // Message handler
-    const handleMessage = ({ conversationId, message }: { conversationId: string; message: Message }) => {
+    const handleMessage = ({ conversationId, message }: { conversationId: string; message: Message | Conversation }) => {
       console.log('🔄 Processing message event in useWebSocket:', {
         receivedConversationId: conversationId,
         currentConversationId: currentConversationRef.current,
-        messageRole: message?.role,
-        messageContent: message?.content?.substring(0, 50) + '...',
+        messageType: typeof message,
+        messageKeys: message ? Object.keys(message).join(', ') : 'null',
         willProcess: currentConversationRef.current === conversationId
       });
       
