@@ -2,7 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { authService } from '../auth/AuthService';
 import { storage } from '../storage';
 import { llmService } from '../llm';
-import { Conversation, Message, TripPreferences } from '../../types';
+import { Conversation, Message } from '../../types';
 import { AppError } from '../../middleware/errorHandler';
 
 export interface ChatMessage {
@@ -192,6 +192,9 @@ export class ChatService {
 
     console.log(`💾 Saving user message to database...`);
     const savedUserMessage = await storage.conversations.addMessage(conversationId, userMessage);
+    if (!savedUserMessage) {
+      throw new AppError('Failed to save user message', 500, 'MESSAGE_SAVE_FAILED');
+    }
     console.log(`✅ User message saved with ID: ${savedUserMessage.id}`);
 
     // Broadcast user message to conversation room (with ID from database)
@@ -220,6 +223,9 @@ export class ChatService {
 
       console.log(`💾 Saving AI message to database...`);
       const savedAssistantMessage = await storage.conversations.addMessage(conversationId, assistantMessage);
+      if (!savedAssistantMessage) {
+        throw new AppError('Failed to save assistant message', 500, 'MESSAGE_SAVE_FAILED');
+      }
       console.log(`✅ AI message saved with ID: ${savedAssistantMessage.id}`);
 
       // Extract and update preferences if needed
