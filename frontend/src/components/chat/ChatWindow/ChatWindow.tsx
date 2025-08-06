@@ -36,8 +36,9 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
     
     setMessages(prev => {
       // Check if message already exists (avoid duplicates)
-      const exists = prev.some(m => m.id === message.id);
-      console.log(`📝 Adding message to state. Exists: ${exists}, Current count: ${prev.length}`);
+      // Handle cases where message might not have an ID yet
+      const exists = message.id ? prev.some(m => m.id === message.id) : false;
+      console.log(`📝 Adding message to state. Has ID: ${!!message.id}, Exists: ${exists}, Current count: ${prev.length}`);
       
       if (exists) {
         console.log('⚠️ Message already exists, skipping');

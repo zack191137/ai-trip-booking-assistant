@@ -82,7 +82,7 @@ export const MessageList = ({ messages }: MessageListProps) => {
           {/* Messages for this date */}
           {group.messages.map((message, messageIndex) => (
             <MessageBubble
-              key={message.id || `${groupIndex}-${messageIndex}`}
+              key={message.id || `${groupIndex}-${messageIndex}-${message.role}-${message.timestamp.getTime()}`}
               message={message}
             />
           ))}

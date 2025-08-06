@@ -191,14 +191,14 @@ export class ChatService {
     };
 
     console.log(`💾 Saving user message to database...`);
-    await storage.conversations.addMessage(conversationId, userMessage);
-    console.log(`✅ User message saved`);
+    const savedUserMessage = await storage.conversations.addMessage(conversationId, userMessage);
+    console.log(`✅ User message saved with ID: ${savedUserMessage.id}`);
 
-    // Broadcast user message to conversation room
+    // Broadcast user message to conversation room (with ID from database)
     console.log(`📢 Broadcasting user message to room: conversation:${conversationId}`);
     this.io.to(`conversation:${conversationId}`).emit('message', {
       conversationId,
-      message: userMessage
+      message: savedUserMessage
     });
 
     // Show processing status
@@ -219,8 +219,8 @@ export class ChatService {
       };
 
       console.log(`💾 Saving AI message to database...`);
-      await storage.conversations.addMessage(conversationId, assistantMessage);
-      console.log(`✅ AI message saved`);
+      const savedAssistantMessage = await storage.conversations.addMessage(conversationId, assistantMessage);
+      console.log(`✅ AI message saved with ID: ${savedAssistantMessage.id}`);
 
       // Extract and update preferences if needed
       console.log(`🔄 Updating preferences if needed...`);
@@ -230,7 +230,7 @@ export class ChatService {
       console.log(`📢 Broadcasting AI response to room: conversation:${conversationId}`);
       this.io.to(`conversation:${conversationId}`).emit('message', {
         conversationId,
-        message: assistantMessage
+        message: savedAssistantMessage
       });
       console.log(`✅ AI response sent successfully!`);
 
@@ -245,12 +245,12 @@ export class ChatService {
       };
 
       console.log(`💾 Saving error message to database...`);
-      await storage.conversations.addMessage(conversationId, errorMessage);
+      const savedErrorMessage = await storage.conversations.addMessage(conversationId, errorMessage);
       
       console.log(`📢 Broadcasting error message to room: conversation:${conversationId}`);
       this.io.to(`conversation:${conversationId}`).emit('message', {
         conversationId,
-        message: errorMessage
+        message: savedErrorMessage
       });
     }
   }
