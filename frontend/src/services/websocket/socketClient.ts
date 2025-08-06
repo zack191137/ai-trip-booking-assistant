@@ -47,6 +47,12 @@ class SocketClient {
       return;
     }
 
+    // Prevent multiple connection attempts
+    if (this.socket && this.socket.connecting) {
+      console.log('Socket connection already in progress');
+      return;
+    }
+
     const wsUrl = import.meta.env.VITE_WS_URL || 'wss://localhost:3000';
     const token = authService.getToken();
 
@@ -67,7 +73,11 @@ class SocketClient {
       reconnectionDelay: this.reconnectDelay,
       reconnectionDelayMax: 10000,
       timeout: 20000,
+      autoConnect: false, // Don't auto-connect, we'll connect manually
     });
+    
+    // Connect manually after setup
+    this.socket.connect();
 
     this.setupEventListeners();
   }
@@ -89,8 +99,9 @@ class SocketClient {
       
       // Handle auth-related disconnections
       if (reason === 'io server disconnect') {
-        // Server disconnected us, might be auth issue
-        this.socket?.connect();
+        // Server forcefully disconnected us (likely auth failure)
+        // Socket.io will handle reconnection automatically if configured
+        console.warn('Server disconnected the socket:', reason);
       }
     });
 
@@ -216,24 +227,32 @@ class SocketClient {
 // Create singleton instance
 const socketClient = new SocketClient();
 
+// Debounce helper to prevent rapid reconnection attempts
+let authChangeTimeout: NodeJS.Timeout | null = null;
+const handleAuthChange = (shouldConnect: boolean) => {
+  if (authChangeTimeout) {
+    clearTimeout(authChangeTimeout);
+  }
+  
+  authChangeTimeout = setTimeout(() => {
+    if (shouldConnect && authService.isAuthenticated()) {
+      socketClient.connect();
+    } else if (!shouldConnect) {
+      socketClient.disconnect();
+    }
+  }, 100); // Small delay to debounce rapid changes
+};
+
 // Auto-connect/disconnect based on auth state
 window.addEventListener('storage', (e) => {
   if (e.key === 'token') {
-    if (e.newValue) {
-      socketClient.connect();
-    } else {
-      socketClient.disconnect();
-    }
+    handleAuthChange(!!e.newValue);
   }
 });
 
 // Also listen for custom auth events
 window.addEventListener('auth-change', () => {
-  if (authService.isAuthenticated()) {
-    socketClient.connect();
-  } else {
-    socketClient.disconnect();
-  }
+  handleAuthChange(authService.isAuthenticated());
 });
 
 export default socketClient;
