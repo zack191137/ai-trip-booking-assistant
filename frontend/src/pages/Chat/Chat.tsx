@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Box, Container } from '@mui/material';
 import { ChatWindow } from '@/components/chat';
 import type { Conversation } from '@/types';
@@ -6,9 +6,9 @@ import type { Conversation } from '@/types';
 const Chat = () => {
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
 
-  const handleConversationChange = (conversation: Conversation) => {
+  const handleConversationChange = useCallback((conversation: Conversation) => {
     setCurrentConversation(conversation);
-  };
+  }, []);
 
   return (
     <Container maxWidth="lg" sx={{ py: 2, height: '100vh' }}>
