@@ -46,11 +46,15 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   // Join/leave conversation rooms
   useEffect(() => {
     if (conversationId && isConnected) {
+      console.log(`🔗 Joining conversation room: ${conversationId}`);
       socketClient.joinConversation(conversationId);
       
       return () => {
+        console.log(`🚪 Leaving conversation room: ${conversationId}`);
         socketClient.leaveConversation(conversationId);
       };
+    } else {
+      console.log(`⏳ Not joining room - conversationId: ${conversationId}, isConnected: ${isConnected}`);
     }
   }, [conversationId, isConnected]);
 
@@ -61,9 +65,20 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     if (onMessage) {
       unsubscribers.push(
         socketClient.on('message', ({ conversationId, message }) => {
+          console.log('🔄 Processing message event in useWebSocket:', {
+            receivedConversationId: conversationId,
+            currentConversationId: currentConversationRef.current,
+            messageRole: message?.role,
+            messageContent: message?.content?.substring(0, 50) + '...',
+            willProcess: currentConversationRef.current === conversationId
+          });
+          
           // Only handle messages for the current conversation
           if (currentConversationRef.current === conversationId) {
+            console.log('✅ Calling onMessage callback');
             onMessage(conversationId, message);
+          } else {
+            console.log('❌ Ignoring message - conversation ID mismatch');
           }
         })
       );
@@ -115,16 +130,23 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
 
   // Actions
   const sendMessage = useCallback((content: string) => {
+    console.log(`📤 useWebSocket sendMessage called:`, {
+      conversationId,
+      isConnected,
+      content: content.substring(0, 50) + '...'
+    });
+    
     if (!conversationId) {
-      console.error('No conversation ID provided');
+      console.error('❌ No conversation ID provided');
       return;
     }
     
     if (!isConnected) {
-      console.error('WebSocket not connected');
+      console.error('❌ WebSocket not connected');
       return;
     }
     
+    console.log(`✅ Sending message via socketClient`);
     socketClient.sendMessage(conversationId, content);
   }, [conversationId, isConnected]);
 

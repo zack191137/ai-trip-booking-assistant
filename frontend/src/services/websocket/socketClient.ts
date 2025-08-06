@@ -181,12 +181,19 @@ class SocketClient {
 
   // Conversation management
   joinConversation(conversationId: string): void {
+    console.log(`🔗 socketClient.joinConversation called:`, {
+      conversationId,
+      connected: this.socket?.connected
+    });
+    
     if (!this.socket?.connected) {
-      console.warn('Socket not connected, cannot join conversation');
+      console.warn('❌ Socket not connected, cannot join conversation');
       return;
     }
     
+    console.log(`🚀 Emitting joinConversation event for: ${conversationId}`);
     this.socket.emit('joinConversation', conversationId);
+    console.log(`✅ joinConversation event emitted`);
   }
 
   leaveConversation(conversationId: string): void {
@@ -200,15 +207,26 @@ class SocketClient {
 
   // Message handling
   sendMessage(conversationId: string, content: string): void {
+    console.log(`📤 socketClient.sendMessage called:`, {
+      conversationId,
+      content: content.substring(0, 50) + '...',
+      connected: this.socket?.connected
+    });
+    
     if (!this.socket?.connected) {
+      console.error('❌ WebSocket not connected in socketClient.sendMessage');
       throw new Error('WebSocket not connected');
     }
     
-    this.socket.emit('sendMessage', { 
+    const messageData = { 
       conversationId, 
       content,
       timestamp: new Date()
-    });
+    };
+    
+    console.log('🚀 Emitting sendMessage event with data:', messageData);
+    this.socket.emit('sendMessage', messageData);
+    console.log('✅ sendMessage event emitted');
   }
 
   // Typing indicators
@@ -230,14 +248,20 @@ class SocketClient {
       return () => {};
     }
     
-    // Type assertion is necessary here due to Socket.io's generic event system
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.socket.on(event, listener as any);
+    console.log(`🎧 Setting up listener for event: ${event}`);
+    
+    // Wrap listener to add logging
+    const wrappedListener = ((...args: any[]) => {
+      console.log(`📨 Received WebSocket event: ${event}`, args);
+      (listener as any)(...args);
+    }) as any;
+    
+    this.socket.on(event, wrappedListener);
     
     // Return unsubscribe function
     return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.socket?.off(event, listener as any);
+      console.log(`🚫 Removing listener for event: ${event}`);
+      this.socket?.off(event, wrappedListener);
     };
   }
 

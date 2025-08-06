@@ -26,11 +26,27 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
 
   // WebSocket handlers
   const handleWebSocketMessage = useCallback((_conversationId: string, message: Message) => {
+    console.log('🔄 ChatWindow handleWebSocketMessage called:', {
+      conversationId: _conversationId,
+      messageRole: message?.role,
+      messageContent: message?.content?.substring(0, 50) + '...',
+      messageId: message?.id,
+      timestamp: message?.timestamp
+    });
+    
     setMessages(prev => {
       // Check if message already exists (avoid duplicates)
       const exists = prev.some(m => m.id === message.id);
-      if (exists) return prev;
-      return [...prev, message];
+      console.log(`📝 Adding message to state. Exists: ${exists}, Current count: ${prev.length}`);
+      
+      if (exists) {
+        console.log('⚠️ Message already exists, skipping');
+        return prev;
+      }
+      
+      const newMessages = [...prev, message];
+      console.log(`✅ Message added. New count: ${newMessages.length}`);
+      return newMessages;
     });
     setIsTyping(false);
   }, []);
