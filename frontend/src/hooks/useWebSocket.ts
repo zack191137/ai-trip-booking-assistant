@@ -140,6 +140,11 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     };
   }, [onMessage, onMessageUpdate, onConversationUpdate, onTyping, onError]);
 
+  // Additional debug: Log when the effect dependencies change
+  useEffect(() => {
+    console.log('🔄 useWebSocket dependencies changed, re-running event listener setup');
+  }, [onMessage, onMessageUpdate, onConversationUpdate, onTyping, onError]);
+
   // Actions
   const sendMessage = useCallback((content: string) => {
     console.log(`📤 useWebSocket sendMessage called:`, {
