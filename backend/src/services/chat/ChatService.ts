@@ -132,19 +132,25 @@ export class ChatService {
       throw new AppError('Socket not authenticated', 401, 'NOT_AUTHENTICATED');
     }
 
+    console.log(`🔗 User ${userId} attempting to join conversation: ${conversationId}`);
+
     // Verify conversation belongs to user
     const conversation = await storage.conversations.findById(conversationId);
     if (!conversation) {
+      console.error(`❌ Conversation not found: ${conversationId}`);
       throw new AppError('Conversation not found', 404, 'CONVERSATION_NOT_FOUND');
     }
 
     if (conversation.userId !== userId) {
+      console.error(`❌ Access denied to conversation: ${conversationId} for user ${userId}`);
       throw new AppError('Access denied to conversation', 403, 'ACCESS_DENIED');
     }
 
     // Join socket room
-    socket.join(`conversation:${conversationId}`);
+    const roomName = `conversation:${conversationId}`;
+    socket.join(roomName);
     (socket as any).currentConversationId = conversationId;
+    console.log(`✅ Socket ${socket.id} joined room: ${roomName}`);
 
     // Send conversation history
     socket.emit('conversation_joined', {
@@ -153,7 +159,7 @@ export class ChatService {
       extractedPreferences: conversation.extractedPreferences,
     });
 
-    console.log(`User ${userId} joined conversation: ${conversationId}`);
+    console.log(`✅ User ${userId} successfully joined conversation: ${conversationId}`);
   }
 
   private async handleMessage(socket: Socket, data: ChatMessage): Promise<void> {
@@ -191,8 +197,8 @@ export class ChatService {
     // Broadcast user message to conversation room
     console.log(`📢 Broadcasting user message to room: conversation:${conversationId}`);
     this.io.to(`conversation:${conversationId}`).emit('message', {
-      message: userMessage,
-      sender: 'user'
+      conversationId,
+      message: userMessage
     });
 
     // Show processing status
@@ -223,8 +229,8 @@ export class ChatService {
       // Send AI response
       console.log(`📢 Broadcasting AI response to room: conversation:${conversationId}`);
       this.io.to(`conversation:${conversationId}`).emit('message', {
-        message: assistantMessage,
-        sender: 'bot'
+        conversationId,
+        message: assistantMessage
       });
       console.log(`✅ AI response sent successfully!`);
 
@@ -243,8 +249,8 @@ export class ChatService {
       
       console.log(`📢 Broadcasting error message to room: conversation:${conversationId}`);
       this.io.to(`conversation:${conversationId}`).emit('message', {
-        message: errorMessage,
-        sender: 'bot'
+        conversationId,
+        message: errorMessage
       });
     }
   }
