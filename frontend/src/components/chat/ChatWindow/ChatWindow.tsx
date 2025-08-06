@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Box, Paper, Typography, CircularProgress, Chip } from '@mui/material';
 import { WifiOff, Wifi } from '@mui/icons-material';
 import { MessageList } from '../MessageList';
@@ -14,6 +14,8 @@ interface ChatWindowProps {
 }
 
 export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowProps) => {
+  console.log('🏠 ChatWindow rendered with conversationId:', conversationId);
+  
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,19 +82,21 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
     }
   }, []);
 
-  // Initialize WebSocket
-  const {
-    isConnected,
-    sendMessage: sendWebSocketMessage,
-    sendTyping,
-  } = useWebSocket({
+  // Initialize WebSocket with memoized options
+  const webSocketOptions = useMemo(() => ({
     conversationId: conversation?.id,
     onMessage: handleWebSocketMessage,
     onMessageUpdate: handleWebSocketMessageUpdate,
     onConversationUpdate: handleWebSocketConversationUpdate,
     onTyping: handleWebSocketTyping,
     onError: handleWebSocketError,
-  });
+  }), [conversation?.id, handleWebSocketMessage, handleWebSocketMessageUpdate, handleWebSocketConversationUpdate, handleWebSocketTyping, handleWebSocketError]);
+  
+  const {
+    isConnected,
+    sendMessage: sendWebSocketMessage,
+    sendTyping,
+  } = useWebSocket(webSocketOptions);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -104,16 +108,29 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
   }, [messages]);
 
   // Load conversation when conversationId changes
+  const prevConversationIdRef = useRef<string | undefined>(conversationId);
+  
   useEffect(() => {
+    // Only load if conversationId actually changed
+    if (prevConversationIdRef.current === conversationId) {
+      console.log('⏭️ Skipping conversation load - same ID');
+      return;
+    }
+    
+    prevConversationIdRef.current = conversationId;
+    console.log('🔄 Loading conversation:', conversationId);
+
     const loadConversation = async () => {
       if (!conversationId) {
         // Create new conversation
         try {
           setIsLoading(true);
           setError(null);
+          console.log('🆕 Creating new conversation');
           const newConversation = await conversationsService.createConversation();
           setConversation(newConversation);
           setMessages(newConversation.messages);
+          console.log('✅ New conversation created:', newConversation.id);
           onConversationChange?.(newConversation);
         } catch (err) {
           setError('Failed to create conversation. Please try again.');
@@ -126,10 +143,15 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
         try {
           setIsLoading(true);
           setError(null);
+          console.log('📁 Loading existing conversation:', conversationId);
           const existingConversation = await conversationsService.getConversation(conversationId);
           setConversation(existingConversation);
           setMessages(existingConversation.messages);
-          onConversationChange?.(existingConversation);
+          console.log('✅ Existing conversation loaded:', existingConversation.id);
+          // Only call onConversationChange if the conversation data is different
+          if (conversation?.id !== existingConversation.id) {
+            onConversationChange?.(existingConversation);
+          }
         } catch (err) {
           setError('Failed to load conversation. Please try again.');
           console.error('Failed to load conversation:', err);
@@ -140,7 +162,7 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
     };
 
     loadConversation();
-  }, [conversationId, onConversationChange]);
+  }, [conversationId]); // Remove onConversationChange dependency
 
   // Handle typing indicator
   const handleTypingChange = useCallback((isTyping: boolean) => {

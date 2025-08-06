@@ -5,8 +5,11 @@ import type { Conversation } from '@/types';
 
 const Chat = () => {
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  
+  console.log('🏡 Chat page rendered with currentConversation:', currentConversation?.id);
 
   const handleConversationChange = useCallback((conversation: Conversation) => {
+    console.log('🔄 Chat handleConversationChange called with:', conversation.id);
     setCurrentConversation(conversation);
   }, []);
 
