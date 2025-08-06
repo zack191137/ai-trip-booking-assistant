@@ -38,6 +38,7 @@ class App {
     this.app.use(helmet({
       contentSecurityPolicy: false, // Disable for development
       crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow OAuth popups
     }));
 
     // CORS handling moved to Nginx
