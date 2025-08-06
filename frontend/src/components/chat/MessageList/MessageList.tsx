@@ -31,7 +31,15 @@ export const MessageList = ({ messages }: MessageListProps) => {
   const groupedMessages: { date: Date; messages: Message[] }[] = [];
   
   messages.forEach((message) => {
-    const messageDate = message.timestamp;
+    // Ensure timestamp is a proper Date object
+    const messageDate = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp);
+    
+    // Skip messages with invalid dates
+    if (isNaN(messageDate.getTime())) {
+      console.warn('Skipping message with invalid timestamp:', message);
+      return;
+    }
+    
     const lastGroup = groupedMessages[groupedMessages.length - 1];
     
     if (!lastGroup || !isSameDay(lastGroup.date, messageDate)) {

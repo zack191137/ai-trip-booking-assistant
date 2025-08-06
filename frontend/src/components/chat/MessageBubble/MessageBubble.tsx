@@ -98,7 +98,10 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
             alignSelf: isUser ? 'flex-end' : 'flex-start',
           }}
         >
-          {format(message.timestamp, 'h:mm a')}
+          {(() => {
+            const timestamp = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp);
+            return isNaN(timestamp.getTime()) ? 'Invalid time' : format(timestamp, 'h:mm a');
+          })()}
         </Typography>
       </Box>
     </Box>

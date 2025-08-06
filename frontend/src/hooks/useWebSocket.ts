@@ -52,98 +52,110 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
     return unsubscribe;
   }, []);
 
-  // Join/leave conversation rooms
+  // Join/leave conversation rooms with debouncing
   useEffect(() => {
-    if (conversationId && isConnected) {
+    if (!conversationId || !isConnected) {
+      console.log(`⏳ Not joining room - conversationId: ${conversationId}, isConnected: ${isConnected}`);
+      return;
+    }
+
+    // Small delay to prevent rapid room switching
+    const timeout = setTimeout(() => {
       console.log(`🔗 Joining conversation room: ${conversationId}`);
       socketClient.joinConversation(conversationId);
+    }, 100);
       
-      return () => {
-        console.log(`🚪 Leaving conversation room: ${conversationId}`);
-        socketClient.leaveConversation(conversationId);
-      };
-    } else {
-      console.log(`⏳ Not joining room - conversationId: ${conversationId}, isConnected: ${isConnected}`);
-    }
+    return () => {
+      clearTimeout(timeout);
+      console.log(`🚪 Leaving conversation room: ${conversationId}`);
+      socketClient.leaveConversation(conversationId);
+    };
   }, [conversationId, isConnected]);
 
-  // Event listeners
+  // Event listeners with stable references
+  const onMessageRef = useRef(onMessage);
+  const onMessageUpdateRef = useRef(onMessageUpdate);
+  const onConversationUpdateRef = useRef(onConversationUpdate);
+  const onTypingRef = useRef(onTyping);
+  const onErrorRef = useRef(onError);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+    onMessageUpdateRef.current = onMessageUpdate;
+    onConversationUpdateRef.current = onConversationUpdate;
+    onTypingRef.current = onTyping;
+    onErrorRef.current = onError;
+  });
+
+  // Event listeners (stable dependencies)
   useEffect(() => {
     console.log('🔧 Setting up WebSocket event listeners');
     const unsubscribers: Array<() => void> = [];
 
-    if (onMessage) {
-      console.log('✅ Setting up message event listener');
-      unsubscribers.push(
-        socketClient.on('message', ({ conversationId, message }) => {
-          console.log('🔄 Processing message event in useWebSocket:', {
-            receivedConversationId: conversationId,
-            currentConversationId: currentConversationRef.current,
-            messageRole: message?.role,
-            messageContent: message?.content?.substring(0, 50) + '...',
-            willProcess: currentConversationRef.current === conversationId
-          });
-          
-          // Only handle messages for the current conversation
-          if (currentConversationRef.current === conversationId) {
-            console.log('✅ Calling onMessage callback');
-            onMessage(conversationId, message);
-          } else {
-            console.log('❌ Ignoring message - conversation ID mismatch');
-          }
-        })
-      );
-    }
+    // Message handler
+    const handleMessage = ({ conversationId, message }: { conversationId: string; message: Message }) => {
+      console.log('🔄 Processing message event in useWebSocket:', {
+        receivedConversationId: conversationId,
+        currentConversationId: currentConversationRef.current,
+        messageRole: message?.role,
+        messageContent: message?.content?.substring(0, 50) + '...',
+        willProcess: currentConversationRef.current === conversationId
+      });
+      
+      // Only handle messages for the current conversation
+      if (currentConversationRef.current === conversationId && onMessageRef.current) {
+        console.log('✅ Calling onMessage callback');
+        onMessageRef.current(conversationId, message);
+      } else if (currentConversationRef.current !== conversationId) {
+        console.log('❌ Ignoring message - conversation ID mismatch');
+      } else {
+        console.log('❌ No onMessage callback available');
+      }
+    };
+    
+    unsubscribers.push(socketClient.on('message', handleMessage));
+    console.log('✅ Set up message event listener');
 
-    if (onMessageUpdate) {
-      unsubscribers.push(
-        socketClient.on('messageUpdate', ({ conversationId, messageId, message }) => {
-          if (currentConversationRef.current === conversationId) {
-            onMessageUpdate(conversationId, messageId, message);
-          }
-        })
-      );
-    }
+    // Message update handler
+    const handleMessageUpdate = ({ conversationId, messageId, message }: { conversationId: string; messageId: string; message: Message }) => {
+      if (currentConversationRef.current === conversationId && onMessageUpdateRef.current) {
+        onMessageUpdateRef.current(conversationId, messageId, message);
+      }
+    };
+    unsubscribers.push(socketClient.on('messageUpdate', handleMessageUpdate));
 
-    if (onConversationUpdate) {
-      unsubscribers.push(
-        socketClient.on('conversationUpdate', ({ conversation }) => {
-          if (currentConversationRef.current === conversation.id) {
-            onConversationUpdate(conversation);
-          }
-        })
-      );
-    }
+    // Conversation update handler
+    const handleConversationUpdate = ({ conversation }: { conversation: Conversation }) => {
+      if (currentConversationRef.current === conversation.id && onConversationUpdateRef.current) {
+        onConversationUpdateRef.current(conversation);
+      }
+    };
+    unsubscribers.push(socketClient.on('conversationUpdate', handleConversationUpdate));
 
-    if (onTyping) {
-      unsubscribers.push(
-        socketClient.on('typing', ({ conversationId, userId, isTyping }) => {
-          if (currentConversationRef.current === conversationId) {
-            onTyping(conversationId, userId, isTyping);
-          }
-        })
-      );
-    }
+    // Typing handler
+    const handleTyping = ({ conversationId, userId, isTyping }: { conversationId: string; userId: string; isTyping: boolean }) => {
+      if (currentConversationRef.current === conversationId && onTypingRef.current) {
+        onTypingRef.current(conversationId, userId, isTyping);
+      }
+    };
+    unsubscribers.push(socketClient.on('typing', handleTyping));
 
-    if (onError) {
-      unsubscribers.push(
-        socketClient.on('error', ({ message, code }) => {
-          onError(message, code);
-        })
-      );
-    }
+    // Error handler
+    const handleError = ({ message, code }: { message: string; code?: string }) => {
+      if (onErrorRef.current) {
+        onErrorRef.current(message, code);
+      }
+    };
+    unsubscribers.push(socketClient.on('error', handleError));
 
     // Cleanup all listeners
     return () => {
       console.log('🧹 Cleaning up WebSocket event listeners');
       unsubscribers.forEach(unsubscribe => unsubscribe());
     };
-  }, [onMessage, onMessageUpdate, onConversationUpdate, onTyping, onError]);
+  }, []); // Empty dependencies - handlers are stable now
 
-  // Additional debug: Log when the effect dependencies change
-  useEffect(() => {
-    console.log('🔄 useWebSocket dependencies changed, re-running event listener setup');
-  }, [onMessage, onMessageUpdate, onConversationUpdate, onTyping, onError]);
 
   // Actions
   const sendMessage = useCallback((content: string) => {
