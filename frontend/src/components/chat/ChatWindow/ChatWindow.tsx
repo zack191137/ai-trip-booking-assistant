@@ -108,15 +108,17 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
   }, [messages]);
 
   // Load conversation when conversationId changes
-  const prevConversationIdRef = useRef<string | undefined>(conversationId);
+  const prevConversationIdRef = useRef<string | undefined>();
+  const hasInitialized = useRef(false);
   
   useEffect(() => {
-    // Only load if conversationId actually changed
-    if (prevConversationIdRef.current === conversationId) {
+    // Always allow initial load, then check for changes
+    if (hasInitialized.current && prevConversationIdRef.current === conversationId) {
       console.log('⏭️ Skipping conversation load - same ID');
       return;
     }
     
+    hasInitialized.current = true;
     prevConversationIdRef.current = conversationId;
     console.log('🔄 Loading conversation:', conversationId);
 
