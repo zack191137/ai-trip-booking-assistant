@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, Paper, Typography, CircularProgress, Chip } from '@mui/material';
+import { WifiOff, Wifi } from '@mui/icons-material';
 import { MessageList } from '../MessageList';
 import { MessageInput } from '../MessageInput';
 import { TypingIndicator } from '../TypingIndicator';
 import { conversationsService } from '@/services/api';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import type { Conversation, Message } from '@/types';
 
 interface ChatWindowProps {
@@ -18,7 +20,62 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set<string>());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  // WebSocket handlers
+  const handleWebSocketMessage = useCallback((_conversationId: string, message: Message) => {
+    setMessages(prev => {
+      // Check if message already exists (avoid duplicates)
+      const exists = prev.some(m => m.id === message.id);
+      if (exists) return prev;
+      return [...prev, message];
+    });
+    setIsTyping(false);
+  }, []);
+
+  const handleWebSocketMessageUpdate = useCallback((_conversationId: string, messageId: string, message: Message) => {
+    setMessages(prev => prev.map(m => m.id === messageId ? message : m));
+  }, []);
+
+  const handleWebSocketConversationUpdate = useCallback((updatedConversation: Conversation) => {
+    setConversation(updatedConversation);
+    onConversationChange?.(updatedConversation);
+  }, [onConversationChange]);
+
+  const handleWebSocketTyping = useCallback((_conversationId: string, userId: string, isTyping: boolean) => {
+    setTypingUsers(prev => {
+      const next = new Set(prev);
+      if (isTyping) {
+        next.add(userId);
+      } else {
+        next.delete(userId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleWebSocketError = useCallback((message: string, code?: string) => {
+    console.error('WebSocket error:', message, code);
+    if (code === 'AUTH_ERROR') {
+      setError('Authentication error. Please refresh the page.');
+    }
+  }, []);
+
+  // Initialize WebSocket
+  const {
+    isConnected,
+    sendMessage: sendWebSocketMessage,
+    sendTyping,
+  } = useWebSocket({
+    conversationId: conversation?.id,
+    onMessage: handleWebSocketMessage,
+    onMessageUpdate: handleWebSocketMessageUpdate,
+    onConversationUpdate: handleWebSocketConversationUpdate,
+    onTyping: handleWebSocketTyping,
+    onError: handleWebSocketError,
+  });
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -68,6 +125,22 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
     loadConversation();
   }, [conversationId, onConversationChange]);
 
+  // Handle typing indicator
+  const handleTypingChange = useCallback((isTyping: boolean) => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    sendTyping(isTyping);
+
+    // Auto-stop typing after 3 seconds
+    if (isTyping) {
+      typingTimeoutRef.current = setTimeout(() => {
+        sendTyping(false);
+      }, 3000);
+    }
+  }, [sendTyping]);
+
   const handleSendMessage = async (content: string) => {
     if (!conversation || !content.trim() || isSending) return;
 
@@ -75,26 +148,42 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
       setIsSending(true);
       setError(null);
       setIsTyping(true);
+      
+      // Stop typing indicator
+      handleTypingChange(false);
 
-      // Optimistically add user message to UI
-      const userMessage: Message = {
-        id: `temp-${Date.now()}`,
-        role: 'user',
-        content: content.trim(),
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, userMessage]);
+      // If WebSocket is connected, let it handle the message
+      if (isConnected) {
+        // Still add optimistic UI update
+        const userMessage: Message = {
+          id: `temp-${Date.now()}`,
+          role: 'user',
+          content: content.trim(),
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, userMessage]);
+        
+        // WebSocket will handle the actual sending
+        sendWebSocketMessage(content.trim());
+      } else {
+        // Fallback to HTTP API if WebSocket is not connected
+        const userMessage: Message = {
+          id: `temp-${Date.now()}`,
+          role: 'user',
+          content: content.trim(),
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, userMessage]);
 
-      // Send message to backend
-      const { conversation: updatedConversation } = await conversationsService.sendMessage(
-        conversation.id,
-        content.trim()
-      );
+        const { conversation: updatedConversation } = await conversationsService.sendMessage(
+          conversation.id,
+          content.trim()
+        );
 
-      // Update conversation and messages with backend response
-      setConversation(updatedConversation);
-      setMessages(updatedConversation.messages);
-      onConversationChange?.(updatedConversation);
+        setConversation(updatedConversation);
+        setMessages(updatedConversation.messages);
+        onConversationChange?.(updatedConversation);
+      }
 
     } catch (err) {
       setError('Failed to send message. Please try again.');
@@ -164,14 +253,29 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
           borderBottom: 1,
           borderColor: 'divider',
           bgcolor: 'background.default',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
         }}
       >
-        <Typography variant="h6" color="text.primary">
-          Trip Planning Assistant
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Tell me about your dream destination and I'll help you plan the perfect trip
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" color="text.primary">
+            Trip Planning Assistant
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Tell me about your dream destination and I'll help you plan the perfect trip
+          </Typography>
+        </Box>
+        
+        {/* Connection Status */}
+        <Chip
+          icon={isConnected ? <Wifi /> : <WifiOff />}
+          label={isConnected ? 'Connected' : 'Offline'}
+          color={isConnected ? 'success' : 'default'}
+          variant="outlined"
+          size="small"
+          sx={{ ml: 2, flexShrink: 0 }}
+        />
       </Box>
 
       {/* Messages Area */}
@@ -201,7 +305,7 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
         ) : (
           <>
             <MessageList messages={messages} />
-            {isTyping && <TypingIndicator />}
+            {(isTyping || typingUsers.size > 0) && <TypingIndicator />}
           </>
         )}
         <div ref={messagesEndRef} />
@@ -220,8 +324,9 @@ export const ChatWindow = ({ conversationId, onConversationChange }: ChatWindowP
       <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
         <MessageInput
           onSendMessage={handleSendMessage}
+          onTypingChange={handleTypingChange}
           disabled={isSending || isLoading}
-          placeholder="Type your message..."
+          placeholder={isConnected ? "Type your message..." : "Offline - messages will be sent when connected"}
         />
       </Box>
     </Paper>

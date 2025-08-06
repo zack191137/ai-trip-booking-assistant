@@ -12,6 +12,7 @@ import { Send, AttachFile } from '@mui/icons-material';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
+  onTypingChange?: (isTyping: boolean) => void;
   disabled?: boolean;
   placeholder?: string;
   maxLength?: number;
@@ -19,6 +20,7 @@ interface MessageInputProps {
 
 export const MessageInput = ({
   onSendMessage,
+  onTypingChange,
   disabled = false,
   placeholder = 'Type your message...',
   maxLength = 2000,
@@ -33,6 +35,12 @@ export const MessageInput = ({
 
     try {
       setIsSending(true);
+      
+      // Stop typing indicator
+      if (onTypingChange) {
+        onTypingChange(false);
+      }
+      
       await onSendMessage(trimmedMessage);
       setMessage('');
       
@@ -57,7 +65,20 @@ export const MessageInput = ({
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
     if (newValue.length <= maxLength) {
+      const wasEmpty = message.length === 0;
       setMessage(newValue);
+      
+      // Trigger typing indicator
+      if (onTypingChange) {
+        const isNowEmpty = newValue.length === 0;
+        if (wasEmpty && !isNowEmpty) {
+          // Started typing
+          onTypingChange(true);
+        } else if (!wasEmpty && isNowEmpty) {
+          // Stopped typing (cleared input)
+          onTypingChange(false);
+        }
+      }
     }
   };
 
