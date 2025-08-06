@@ -31,8 +31,9 @@ class SocketClient {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
   private connectionListeners: Set<(connected: boolean) => void> = new Set();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 3; // Reduced from 5
   private reconnectDelay = 1000; // Start with 1 second
+  private isReconnecting = false; // Flag to prevent multiple reconnection attempts
 
   constructor() {
     // Initialize socket when authentication is available
@@ -53,6 +54,12 @@ class SocketClient {
       return;
     }
 
+    // Prevent multiple reconnection attempts
+    if (this.isReconnecting) {
+      console.log('Reconnection already in progress, skipping');
+      return;
+    }
+
     const wsUrl = import.meta.env.VITE_WS_URL || 'wss://localhost:3000';
     const token = authService.getToken();
 
@@ -70,6 +77,7 @@ class SocketClient {
     }
 
     console.log('Connecting to WebSocket:', wsUrl);
+    this.isReconnecting = true; // Set flag to prevent concurrent attempts
 
     this.socket = io(wsUrl, {
       auth: {
@@ -96,6 +104,7 @@ class SocketClient {
       console.log('WebSocket connected');
       this.reconnectAttempts = 0;
       this.reconnectDelay = 1000;
+      this.isReconnecting = false; // Clear flag on successful connection
       this.notifyConnectionListeners(true);
     });
 
@@ -113,10 +122,11 @@ class SocketClient {
 
     this.socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error.message);
+      this.isReconnecting = false; // Clear flag on error
       this.reconnectAttempts++;
       
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('Max reconnection attempts reached');
+        console.error('Max reconnection attempts reached, giving up');
         this.notifyConnectionListeners(false);
       } else {
         // Manual reconnection with exponential backoff
@@ -124,9 +134,11 @@ class SocketClient {
         console.log(`Retrying connection in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         
         setTimeout(() => {
-          if (authService.isAuthenticated() && !this.socket?.connected && !this.socket?.connecting) {
+          if (authService.isAuthenticated() && !this.socket?.connected && !this.socket?.connecting && !this.isReconnecting) {
             console.log('Attempting manual reconnection...');
             this.connect();
+          } else {
+            console.log('Skipping reconnection - conditions not met');
           }
         }, delay);
       }
@@ -137,9 +149,11 @@ class SocketClient {
       console.error('WebSocket error:', message, code);
       
       // Handle auth errors
-      if (code === 'AUTH_ERROR' || code === 'UNAUTHORIZED') {
+      if (code === 'AUTH_ERROR' || code === 'UNAUTHORIZED' || code === 'AUTH_FAILED') {
+        console.error('Authentication error detected, stopping reconnection attempts');
+        this.reconnectAttempts = this.maxReconnectAttempts; // Stop trying to reconnect
+        this.isReconnecting = false;
         this.disconnect();
-        // Could trigger re-authentication flow here
       }
     });
   }
@@ -155,6 +169,7 @@ class SocketClient {
       // Reset connection state
       this.reconnectAttempts = 0;
       this.reconnectDelay = 1000;
+      this.isReconnecting = false; // Clear flag on disconnect
     }
   }
 
