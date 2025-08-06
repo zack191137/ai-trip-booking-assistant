@@ -48,9 +48,9 @@ export class ChatService {
       });
 
       // Handle joining conversations
-      socket.on('join_conversation', async (data: { conversationId: string }) => {
+      socket.on('joinConversation', async (conversationId: string) => {
         try {
-          await this.handleJoinConversation(socket, data.conversationId);
+          await this.handleJoinConversation(socket, conversationId);
         } catch (error) {
           socket.emit('error', {
             message: error instanceof Error ? error.message : 'Failed to join conversation',
@@ -60,7 +60,7 @@ export class ChatService {
       });
 
       // Handle new messages
-      socket.on('message', async (data: ChatMessage) => {
+      socket.on('sendMessage', async (data: ChatMessage) => {
         try {
           await this.handleMessage(socket, data);
         } catch (error) {
