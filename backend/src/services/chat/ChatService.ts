@@ -71,9 +71,19 @@ export class ChatService {
 
       // Handle new messages
       socket.on('sendMessage', async (data: ChatMessage) => {
+        console.log('📨 Received sendMessage event:', {
+          socketId: socket.id,
+          userId: (socket as any).userId,
+          conversationId: data?.conversationId,
+          content: data?.content?.substring(0, 50) + (data?.content?.length > 50 ? '...' : ''),
+          timestamp: data?.timestamp
+        });
+        
         try {
           await this.handleMessage(socket, data);
+          console.log('✅ Message processed successfully');
         } catch (error) {
+          console.error('❌ Message processing failed:', error);
           socket.emit('error', {
             message: error instanceof Error ? error.message : 'Failed to process message',
             code: 'MESSAGE_PROCESSING_FAILED'
@@ -147,18 +157,25 @@ export class ChatService {
   }
 
   private async handleMessage(socket: Socket, data: ChatMessage): Promise<void> {
+    console.log('🔄 Starting handleMessage processing...');
+    
     const userId = (socket as any).userId;
     if (!userId) {
+      console.error('❌ Socket not authenticated - no userId found');
       throw new AppError('Socket not authenticated', 401, 'NOT_AUTHENTICATED');
     }
 
     const { conversationId, content, timestamp } = data;
+    console.log(`📝 Processing message from user ${userId} in conversation ${conversationId}`);
 
     // Validate conversation access
+    console.log(`🔍 Looking up conversation ${conversationId}...`);
     const conversation = await storage.conversations.findById(conversationId);
     if (!conversation || conversation.userId !== userId) {
+      console.error(`❌ Invalid conversation: ${conversationId} for user ${userId}`);
       throw new AppError('Invalid conversation', 403, 'INVALID_CONVERSATION');
     }
+    console.log(`✅ Conversation found and authorized`);
 
     // Add user message to conversation
     const userMessage: Omit<Message, 'id'> = {
@@ -167,20 +184,26 @@ export class ChatService {
       timestamp: new Date(timestamp),
     };
 
+    console.log(`💾 Saving user message to database...`);
     await storage.conversations.addMessage(conversationId, userMessage);
+    console.log(`✅ User message saved`);
 
     // Broadcast user message to conversation room
+    console.log(`📢 Broadcasting user message to room: conversation:${conversationId}`);
     this.io.to(`conversation:${conversationId}`).emit('message', {
       message: userMessage,
       sender: 'user'
     });
 
     // Show processing status
+    console.log(`⏳ Sending processing status to client...`);
     socket.emit('processing', { status: 'thinking', message: 'Thinking about your request...' });
 
     try {
       // Generate AI response
+      console.log(`🤖 Generating AI response...`);
       const aiResponse = await this.generateAIResponse(conversation, content);
+      console.log(`✅ AI response generated: ${aiResponse.substring(0, 50)}...`);
 
       // Add AI message to conversation
       const assistantMessage: Omit<Message, 'id'> = {
@@ -189,19 +212,24 @@ export class ChatService {
         timestamp: new Date(),
       };
 
+      console.log(`💾 Saving AI message to database...`);
       await storage.conversations.addMessage(conversationId, assistantMessage);
+      console.log(`✅ AI message saved`);
 
       // Extract and update preferences if needed
+      console.log(`🔄 Updating preferences if needed...`);
       await this.updatePreferencesIfNeeded(conversationId);
 
       // Send AI response
+      console.log(`📢 Broadcasting AI response to room: conversation:${conversationId}`);
       this.io.to(`conversation:${conversationId}`).emit('message', {
         message: assistantMessage,
         sender: 'bot'
       });
+      console.log(`✅ AI response sent successfully!`);
 
     } catch (error) {
-      console.error('Error generating AI response:', error);
+      console.error('❌ Error generating AI response:', error);
       
       // Send error message
       const errorMessage: Omit<Message, 'id'> = {
@@ -210,8 +238,10 @@ export class ChatService {
         timestamp: new Date(),
       };
 
+      console.log(`💾 Saving error message to database...`);
       await storage.conversations.addMessage(conversationId, errorMessage);
       
+      console.log(`📢 Broadcasting error message to room: conversation:${conversationId}`);
       this.io.to(`conversation:${conversationId}`).emit('message', {
         message: errorMessage,
         sender: 'bot'
