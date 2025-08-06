@@ -5,7 +5,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 
 export interface CreateConversationResponse {
   success: boolean;
-  data: Conversation;
+  data: {
+    message: string;
+    conversation: Conversation;
+  };
 }
 
 export interface GetConversationsResponse {
@@ -15,7 +18,9 @@ export interface GetConversationsResponse {
 
 export interface GetConversationResponse {
   success: boolean;
-  data: Conversation;
+  data: {
+    conversation: Conversation;
+  };
 }
 
 export interface SendMessageRequest {
@@ -84,7 +89,7 @@ class ConversationsService {
       throw new Error('Failed to create conversation');
     }
 
-    const conversation = response.data.data;
+    const conversation = response.data.data.conversation;
     return {
       ...conversation,
       createdAt: new Date(conversation.createdAt),
@@ -118,7 +123,7 @@ class ConversationsService {
       throw new Error('Failed to fetch conversation');
     }
 
-    const conversation = response.data.data;
+    const conversation = response.data.data.conversation;
     return {
       ...conversation,
       createdAt: new Date(conversation.createdAt),
